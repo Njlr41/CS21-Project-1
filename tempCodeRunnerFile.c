@@ -1,0 +1,1 @@
+ line_number == number_of_instructions

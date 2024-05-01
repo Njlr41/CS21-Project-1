@@ -34,7 +34,7 @@ int main()
 
   fscanf(fp, "%d", &number_of_instructions);
 
-  for(int i = 0; i < number_of_instructions; i++){
+  while(line_number <= number_of_instructions){
     fscanf(fp,"%s%c", &symbol, &c);
     printf("\n%s (%d)", symbol, (int)c);
 
@@ -78,7 +78,7 @@ int main()
 
     else printf("=>operand"); // operand
 
-    if(c == '\n') printf("\n[Line %d]",++line_number);
+    if(c == '\n' || number_of_instructions == line_number) printf("\n[Line %d]", ++line_number);
   }
 
   printf("\n\n");
