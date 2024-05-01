@@ -20,6 +20,7 @@ int main()
 {
   char *file_name = "sample_input.txt"; // file name
   FILE *fp = fopen(file_name, "r");     // read file
+  FILE *output = fopen("output.txt", "w"); // write file
 
   if(fp == NULL){
     printf("Error");
@@ -86,7 +87,9 @@ int main()
   Symbol *temp = head;
   while(temp){
     printf("[%5s 0x%X]",temp->name, temp->address);
+    fprintf(output, "[%5s 0x%X]",temp->name, temp->address); // write output to output.txt
     if(temp->next) printf("\n");
+    if(temp->next) fprintf(output ,"\n"); // write output to output.txt
     temp = temp->next;
   }
   return 0;
