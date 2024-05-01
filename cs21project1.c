@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #define base 0x10004000 // base address for symbol table
-
+// testing
 typedef struct node Symbol;
 
 struct node{
