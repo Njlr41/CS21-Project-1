@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #define base 0x10004000 // base address for symbol table
-// testing
+
 typedef struct node Symbol;
 
 struct node{
@@ -27,11 +27,15 @@ int main()
   }
 
   char symbol[100], mnemonic[100], c;
+  int number_of_instructions;
   int line_number = 1;
   Symbol *head = NULL;
 
-  while(fscanf(fp,"%s%c", &symbol, &c)!=EOF){
-    printf("\n%s (%d)",symbol,(int)c);
+  fscanf(fp, "%d", &number_of_instructions);
+
+  for(int i = 0; i < number_of_instructions; i++){
+    fscanf(fp,"%s%c", &symbol, &c);
+    printf("\n%s (%d)", symbol, (int)c);
 
     if(symbol[strlen(symbol)-1] == ':'){ // label
       // remove ':' in symbol
@@ -41,14 +45,15 @@ int main()
       if(symbol_exists(symbol,head))
         // symbol was already encountered
         // update address
-        //update_address(symbol,10,head);
+        // update_address(symbol,10,head);
         update_address(symbol,(line_number-1),&head);
+
       else
         // first encounter of symbol
         append_symbol(symbol,base+(line_number-1)*4,&head);
 
       printf("=>label");
-    }
+      }
 
     else if(c == '\n'){ // potential label
       // check if mnemonic needs a target/label
