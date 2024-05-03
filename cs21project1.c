@@ -11,6 +11,16 @@ struct node{
   int address;
 };
 
+struct instruction{
+  char mnemonic[100];
+  char type;
+  int target;
+  int rs;
+  int rt;
+  int rd;
+  int immediate;
+};
+
 int needs_target(char mnem[]);
 void append_symbol(char symbol_name[], int address_val, Symbol **head);
 int symbol_exists(char symbol_name[], Symbol *head);
