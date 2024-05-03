@@ -27,6 +27,7 @@ int needs_target(char mnem[]);
 void append_symbol(char symbol_name[], int address_val, Symbol **head);
 int symbol_exists(char symbol_name[], Symbol *head);
 void update_address(char symbol_name[], int diff, Symbol *head);
+Instruction create_instruction(char* mnemonic, char type, int target, int rs, int rt, int rd, int immediate);
 
 int main()
 {
@@ -41,11 +42,13 @@ int main()
 
   char symbol[100], mnemonic[100], c;
   int number_of_instructions;
+  int flag = 1;
   int line_number = 1;
   Symbol *head = NULL;
-  Instruction *A = (Instruction *)malloc(sizeof(Instruction));
+  Instruction *temp_instruction = (Instruction *)malloc(sizeof(Instruction));
 
   fscanf(fp, "%d", &number_of_instructions);
+  Instruction InstructionList[number_of_instructions + 1];
   while(line_number <= number_of_instructions){
     fscanf(fp, "%s%c", &symbol, &c);
     printf("\n%s (%d)", symbol, (int)c);
@@ -85,17 +88,25 @@ int main()
     else if(symbol[strlen(symbol) - 1] != ','){ // mnemonic
       //symbol[strlen(symbol)-1] = '\0';
       strcpy(mnemonic, symbol);
-      strcpy(A->mnemonic, symbol);
+      strcpy(temp_instruction->mnemonic, symbol);
       printf("=>mnemonic");
     }
 
     else printf("=>operand"); // operand
 
-    if(c == '\n' || number_of_instructions == line_number) printf("\n[Line %d]", ++line_number);
+    if(c == '\n' || number_of_instructions == line_number){
+      InstructionList[line_number - 1] = create_instruction(temp_instruction->mnemonic, temp_instruction->type, temp_instruction->target, temp_instruction->rs, temp_instruction->rt, temp_instruction->rd, temp_instruction->immediate);
+      printf("\n[Line %d]", ++line_number);
+    }
+      
   }
 
   printf("\n\n");
 
+  for(int i = 0; i < number_of_instructions; i++)
+  {
+    printf("%s\n", (InstructionList[i]).mnemonic);
+  }
   // print symbol table
   Symbol *temp = head;
   while(temp){
@@ -108,6 +119,17 @@ int main()
   return 0;
 }
 
+Instruction create_instruction(char* mnemonic, char type, int target, int rs, int rt, int rd, int immediate){
+  Instruction *A = (Instruction *)malloc(sizeof(Instruction));
+  strcpy(A->mnemonic, mnemonic);
+  A->type = type;
+  A->target = target;
+  A->rs = rs;
+  A->rt = rt;
+  A->rd = rd;
+  A->immediate = immediate;
+  return *A;
+}
 int needs_target(char mnem[]){
   // check if mnemonic of instruction associated with operand needs target
   char lst[6][5] = {"beq", "bne", "lw", "sw", "j", "jal"};
