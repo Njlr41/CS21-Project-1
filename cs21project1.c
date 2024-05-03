@@ -11,6 +11,8 @@ struct node{
   int address;
 };
 
+typedef struct instruction Instruction;
+
 struct instruction{
   char mnemonic[100];
   char type;
@@ -41,9 +43,9 @@ int main()
   int number_of_instructions;
   int line_number = 1;
   Symbol *head = NULL;
+  Instruction *A = (Instruction *)malloc(sizeof(Instruction));
 
   fscanf(fp, "%d", &number_of_instructions);
-
   while(line_number <= number_of_instructions){
     fscanf(fp, "%s%c", &symbol, &c);
     printf("\n%s (%d)", symbol, (int)c);
@@ -83,6 +85,7 @@ int main()
     else if(symbol[strlen(symbol) - 1] != ','){ // mnemonic
       //symbol[strlen(symbol)-1] = '\0';
       strcpy(mnemonic, symbol);
+      strcpy(A->mnemonic, symbol);
       printf("=>mnemonic");
     }
 
