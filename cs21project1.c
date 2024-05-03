@@ -35,7 +35,7 @@ int main()
   fscanf(fp, "%d", &number_of_instructions);
 
   while(line_number <= number_of_instructions){
-    fscanf(fp,"%s%c", &symbol, &c);
+    fscanf(fp, "%s%c", &symbol, &c);
     printf("\n%s (%d)", symbol, (int)c);
 
     if(symbol[strlen(symbol)-1] == ':'){ // label
@@ -43,15 +43,15 @@ int main()
       symbol[strlen(symbol)-1] = '\0';
 
       // add symbol to the symbol table
-      if(symbol_exists(symbol,head))
+      if(symbol_exists(symbol, head))
         // symbol was already encountered
         // update address
         // update_address(symbol,10,head);
-        update_address(symbol,(line_number-1),&head);
+        update_address(symbol, (line_number - 1), head);
 
       else
         // first encounter of symbol
-        append_symbol(symbol,base+(line_number-1)*4,&head);
+        append_symbol(symbol, base + (line_number - 1)*4, &head);
 
       printf("=>label");
       }
@@ -61,8 +61,8 @@ int main()
       if(needs_target(mnemonic)){
         // mnemonic needs a target/label
         // add symbol to symbol table IF it doesn't exist yet
-        if(symbol_exists(symbol,head))
-          append_symbol(symbol,0,&head);
+        if(symbol_exists(symbol, head))
+          append_symbol(symbol, 0, &head);
 
         printf("=>label");
       }
@@ -70,7 +70,7 @@ int main()
       else printf("=>operand"); // immediate/register operand
     }
 
-    else if(symbol[strlen(symbol)-1] != ','){ // mnemonic
+    else if(symbol[strlen(symbol) - 1] != ','){ // mnemonic
       //symbol[strlen(symbol)-1] = '\0';
       strcpy(mnemonic, symbol);
       printf("=>mnemonic");
@@ -86,10 +86,10 @@ int main()
   // print symbol table
   Symbol *temp = head;
   while(temp){
-    printf("[%5s 0x%X]",temp->name, temp->address);
-    fprintf(output, "[%5s 0x%X]",temp->name, temp->address); // write output to output.txt
+    printf("[%5s 0x%X]", temp->name, temp->address);
+    fprintf(output, "[%5s 0x%X]", temp->name, temp->address); // write output to output.txt
     if(temp->next) printf("\n");
-    if(temp->next) fprintf(output ,"\n"); // write output to output.txt
+    if(temp->next) fprintf(output,"\n"); // write output to output.txt
     temp = temp->next;
   }
   return 0;
@@ -99,7 +99,7 @@ int needs_target(char mnem[]){
   // check if mnemonic of instruction associated with operand needs target
   char lst[6][5] = {"beq", "bne", "lw", "sw", "j", "jal"};
   for(int i=0; i<6; i++)
-    if(strcmp(lst[i],mnem)==0) return 1;
+    if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
 }
 
@@ -126,7 +126,7 @@ void update_address(char symbol_name[], int diff, Symbol *head){
   // update address of symbol that was already encountered
   Symbol *temp = head;
   while(1){
-    if(strcmp(symbol_name,temp->name)==0){
+    if(strcmp(symbol_name, temp->name)==0){
       temp->address = base+diff*4;
       return;
     }
