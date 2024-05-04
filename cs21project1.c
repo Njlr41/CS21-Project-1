@@ -78,7 +78,7 @@ int main()
 
         else
           // first encounter of symbol
-          append_symbol(symbol, BASE_DATA + byte_counter*4, &head);
+          append_symbol(symbol, BASE_DATA + byte_counter, &head);
       }
       else if(symbol[0] == '.'){ // either .ascii or .word
         strcpy(symbol, mnemonic);
@@ -88,7 +88,8 @@ int main()
         if(strcmp(mnemonic,".ascii")==0){ // allocate string
           // update value of corresponding symbol in the table
           // update byte counter by length of the string (+1 for terminator \0)
-          update_str(symbol, head);
+          symbol[strlen(symbol)-1] = '\0';  // remove closing "
+          update_str(symbol+1, head);       // remove opening "
           byte_counter += (strlen(symbol)+1);
           printf("=> string");
         }
@@ -96,7 +97,7 @@ int main()
           // update value of corresponding symbol in the table
           // update byte counter by 4 (size of integer is 4 bytes)
           update_int(atoi(symbol), head);
-          byte_counter++;
+          byte_counter += 4;
           printf("=> int");
         }
         else{
@@ -289,7 +290,7 @@ void update_address(char symbol_name[], int diff, int in_data, Symbol *head){
   Symbol *temp = head;
   while(1){
     if(strcmp(symbol_name, temp->name)==0){
-      temp->address = in_data ? BASE_DATA + diff*4 : BASE_TEXT + diff*4;
+      temp->address = in_data ? BASE_DATA + diff : BASE_TEXT + diff*4;
       return;
     }
     temp = temp->next;
