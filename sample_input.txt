@@ -1,4 +1,4 @@
-30
+36
 .text
 main: li $v0, 5
 syscall
@@ -29,3 +29,10 @@ log: beq $a0, $0, cont
 srl $a0, $a0, 1
 addi $v0, $v0, 1
 j log
+.data
+allocate_str(msg1,"Enter a string: ")
+allocate_str(msg2,"You entered: ")
+allocate_bytes(name,10)
+award: .asciiz "AWARD"
+eme: .word 123
+luh: .word 31241

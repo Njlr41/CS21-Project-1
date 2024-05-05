@@ -54,18 +54,19 @@ int main()
 
   fscanf(fp, "%d", &number_of_instructions);
   Instruction InstructionList[number_of_instructions + 1];
-  while(line_number <= number_of_instructions){
-    fscanf(fp, "%s%c", &symbol, &c);
-    printf("\n%s (%d)", symbol, (int)c);
-
-    if(strcmp(symbol,".data:")==0){
-      // already reached the data segment
-      // update in_data_segment to 1
+  printf("[Line 1]");
+  while(fscanf(fp, "%s%c", &symbol, &c)!=EOF){
+    printf("\n%30s ", symbol);
+    if(strcmp(symbol,".data")==0){
+      /*
+      FIRST PASS already reached the DATA segment
+      => update in_data_segment to 1
+      */
       in_data_segment = 1;
       printf("=> data segment");
     }
     else if(in_data_segment==1){ // DATA SEGMENT
-      if(symbol[strlen(symbol)-1] == ':'){ // label
+      if(symbol[strlen(symbol)-1] == ':' && strcmp(mnemonic,"allocate_str") != 0 && strcmp(mnemonic,".asciiz") != 0){ // label
         // remove ':' at the end of the symbol
         symbol[strlen(symbol)-1] = '\0';
 
@@ -73,86 +74,135 @@ int main()
         if(symbol_exists(symbol, head))
           // symbol was already encountered
           // update address
-          // update_address(symbol,10,head);
           update_address(symbol, byte_counter, 1, head);
 
         else
           // first encounter of symbol
+          // offset (byte_counter) is already in bytes
           append_symbol(symbol, BASE_DATA + byte_counter, &head);
+        printf("=> label");
       }
-      else if(symbol[0] == '.'){ // either .ascii or .word
-        strcpy(symbol, mnemonic);
-        printf("=> allocation");
+      else if(symbol[0] == '.'){ // either .asciiz or .word
+        strcpy(mnemonic,symbol);
+        printf("=> allocation (%s)",mnemonic);
       }
-      else{ // either allocate string, allocate bytes, or operand of .ascii and .word
-        if(strcmp(mnemonic,".ascii")==0){ // allocate string
-          // update value of corresponding symbol in the table
-          // update byte counter by length of the string (+1 for terminator \0)
-          symbol[strlen(symbol)-1] = '\0';  // remove closing "
-          update_str(symbol+1, head);       // remove opening "
-          byte_counter += (strlen(symbol)+1);
+      else{ // either allocate string, allocate bytes, or operand of .asciiz and .word
+        if(strcmp(mnemonic,".asciiz")==0 || strcmp(mnemonic,"allocate_str")==0){ // allocate string
+          if(symbol[strlen(symbol)-1] == '"'){
+            /*
+            symbol is operand of .asciiz
+            => update byte_counter by length of string without quotation marks
+            => remove " at the end
+            */ 
+            byte_counter += (strlen(symbol)-1);   // (length-2)+1
+            symbol[strlen(symbol)-1] = '\0';    // remove closing "
+          }
+          else if(symbol[strlen(symbol)-1] == ')'){
+            /*
+            symbol is the last concatenation of allocate_str
+            => update byte_counter by length of string without ")
+            => remove ") at the end
+            */ 
+            byte_counter += (strlen(symbol)-1); // (length-2)+1
+            symbol[strlen(symbol)-1] = '\0';    // remove closing )
+            symbol[strlen(symbol)-1] = '\0';    // remove closing "
+          }
+          else {
+            /*
+            symbol is concatenation of allocate_str
+            => update byte_counter by length of string without "
+            => remove " at the end
+            */ 
+            byte_counter += (strlen(symbol)+1);
+          }
+          
+          // update str_value of corresponding symbol
+          if(symbol[0] == '"')
+            update_str(symbol+1, head);         // remove opening "
+          else
+            update_str(symbol, head);
+          
           printf("=> string");
         }
-        else if(strcmp(symbol,".word")==0){ // allocate integer
-          // update value of corresponding symbol in the table
-          // update byte counter by 4 (size of integer is 4 bytes)
+        else if(strcmp(mnemonic,".word")==0){ 
+          /*
+          symbol is the integer operand of .word
+          => convert string to integer using atoi()
+          => increment byte_counter by 4 (size of an integer is 4 bytes)
+          */
           update_int(atoi(symbol), head);
           byte_counter += 4;
           printf("=> int");
         }
         else{
           /*
+          symbol is a macro of string/integer allocation
+
           Allocation of string:
           a l l o c a t e _ s t  r  (  <label_name>,"<str_value>\0")
           0|1|2|3|4|5|6|7|8|9|10|11|12|13|14
                                        ^ starting index
 
           Allocation of integer:
-          a l l o c a t e _ b y  t  e  s  (  <labe_name>,<int_value>)
+          a l l o c a t e _ b y  t  e  s  (  <label_name>,<int_value>)
           0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15
                                              ^ starting index
           */
           printf("=> macro");
-          if(symbol[9]=='s'){ // allocate string
-            // initialize variables for
-            // label name, string value,
-            // and starting indices
+          if(symbol[9]=='s'){
+            /*
+            allocate string
+            => initialize variables for label name, string value, and starting indices
+            */
+            strcpy(mnemonic, "allocate_str");
             char label_name[100] = {}, str_value[100] = {};
             int i=13, j=0;
 
-            // obtain label name and string value
-            for(; symbol[i]!=','; i++, j++)
+            /*
+            obtain label name and string value
+            => label name ends before ,
+            => string value can either be one word (ends with ") or multiple words
+            */
+            for(; symbol[i] != ','; i++, j++)
               label_name[j] = symbol[i];
-
-            for(i=i+2,j=0;symbol[i]!='"';i++,j++)
+            for(i=i+2, j=0; symbol[i] != '"' && symbol[i] != '\0'; i++, j++)
               str_value[j] = symbol[i];
-
-            // add symbol to symbol table
-            // update value of corresponding symbol in the table
-            // update byte counter by length of the string (+1 for terminator \0)
-            append_symbol(label_name, BASE_DATA + byte_counter*4, &head);
+            
+            /*
+            add symbol to symbol table
+            => update string value of corresponding symbol in the table
+            => update byte counter by length of the string (+1 for the terminator \0)
+            */
+            append_symbol(label_name, BASE_DATA + byte_counter, &head);
             update_str(str_value, head);
-            byte_counter += (strlen(symbol)+1);
+            byte_counter += (strlen(str_value)+1);
           }
-          else{ // allocate integer
-            // initialize variables for
-            // label name, integer value,
-            // and starting indices
+          else{
+            /*
+            allocate integer
+            => initialize variables for label name, integer value, and starting indices
+            */
             char label_name[100] = {}, int_value[100] = {};
             int i=15, j=0;
 
-            // obtain label name and integer value
-            for(;symbol[i]!=','; i++, j++)
+            /*
+            obtain label name and string value
+            => label name ends before ,
+            => integer value ends before )
+            */
+            for(; symbol[i]!=','; i++, j++)
               label_name[j] = symbol[i];
             for(i=i+1,j=0;symbol[i]!=')';i++,j++)
               int_value[j] = symbol[i];
 
-            // add symbol to symbol table
-            // update value of corresponding symbol in the table
-            // update byte counter by 4 (size of integer is 4 bytes)
-            append_symbol(label_name, BASE_DATA + byte_counter*4, &head);
+            /*
+            add symbol to symbol table
+            => update integer value of corresponding symbol in the table
+            => increment byte counter by 4 (size of an integer is 4 bytes)
+            */
+            append_symbol(label_name, BASE_DATA + byte_counter, &head);
             update_int(atoi(int_value), head);
-            byte_counter++;
+            byte_counter+=4;
           }
         }
       }
@@ -173,34 +223,37 @@ int main()
           // first encounter of symbol
           append_symbol(symbol, BASE_TEXT + (line_number - 1)*4, &head);
 
-        printf("=>label");
+        printf("=> label");
         }
 
-      else if(c == '\n'){ // potential label
+      else if(c == '\n'){ // potential label or syscall
+        if(strcmp(symbol,"syscall")==0){
+          strcpy(mnemonic,symbol);
+          printf("=> syscall");
+        }
         // check if mnemonic needs a target/label
-        if(needs_target(mnemonic)){
+        else if(needs_target(mnemonic)){
           // mnemonic needs a target/label
           // add symbol to symbol table IF it doesn't exist yet
-          if(symbol_exists(symbol, head))
+          printf("%d",symbol_exists(symbol,head));
+          if(!symbol_exists(symbol, head))
             append_symbol(symbol, 0, &head);
 
-          printf("=>label");
+          printf("=> label");
         }
-        
-        else printf("=>operand"); // immediate/register operand
+        else printf("=> operand"); // immediate/register operand
       }
 
       else if(symbol[strlen(symbol) - 1] != ','){ // mnemonic
-        //symbol[strlen(symbol)-1] = '\0';
         strcpy(mnemonic, symbol);
         strcpy(temp_instruction->mnemonic, symbol);
-        printf("=>mnemonic");
+        printf("=> mnemonic");
       }
 
-      else printf("=>operand"); // operand
+      else printf("=> operand"); // operand
     }
 
-    if(c == '\n' || number_of_instructions == line_number){
+    if(c == '\n'){
       InstructionList[line_number - 1] = create_instruction(temp_instruction->mnemonic, temp_instruction->type, temp_instruction->target, temp_instruction->rs, temp_instruction->rt, temp_instruction->rd, temp_instruction->immediate);
       printf("\n[Line %d]", ++line_number);
       // reset
@@ -218,10 +271,36 @@ int main()
   // print symbol table
   Symbol *temp = head;
   while(temp){
-    printf("[%5s 0x%X]", temp->name, temp->address);
-    fprintf(output, "[%5s 0x%X]", temp->name, temp->address); // write output to output.txt
+    printf("[%-5s 0x%08X]", temp->name, temp->address);
+    fprintf(output, "[%-5s 0x%08X]", temp->name, temp->address); // write output to output.txt
     if(temp->next) printf("\n");
     if(temp->next) fprintf(output,"\n"); // write output to output.txt
+    temp = temp->next;
+  }
+
+  // print data segment symbols
+  temp = head;
+  int printed=0;
+  while(temp){
+    if(strlen(temp->str_value)!=0){
+      if(printed==0){
+        printf("| %-5s | %-20s | %10s |\n", "Label", "Content", "Address");
+        for(int k=0; k<45; k++) printf("-");
+        printf("\n");
+        printed=1;
+      }
+      printf("| %-5s | %-20s | 0x%08X |", temp->name, temp->str_value, temp->address);
+    }
+    else if(temp->address >= BASE_DATA){
+      if(printed==0){
+        printf("| %-5s | %-20s | %10s |\n", "Label", "Content", "Address");
+        for(int k=0; k<45; k++) printf("-");
+        printf("\n");
+        printed=1;
+      }
+      printf("| %-5s | %-20d | 0x%08X |", temp->name, temp->int_value, temp->address);
+    }
+    if(temp->next) printf("\n");
     temp = temp->next;
   }
   return 0;
@@ -266,22 +345,32 @@ void append_symbol(char symbol_name[], int address_val, Symbol **head){
 }
 
 void update_str(char str_value[], Symbol *head){
-  // update str_value field of symbol in data segment
-  // => the last appended symbol in the table corresponds to
-  // => the symbol to be updated
+  /*
+  update str_value field of symbol in data segment
+  => the last appended symbol in the table corresponds to the symbol to be updated
+  */
   Symbol *temp = head;
   while(temp->next != NULL) temp = temp->next;
-  strcpy(temp->str_value,str_value);
+  if(strlen(temp->str_value) == 0) 
+    // new 
+    strcpy(temp->str_value,str_value);
+  else{ 
+    // concatenate string
+    strcat(temp->str_value," ");
+    strcat(temp->str_value, str_value);
+  }
+
   return;
 }
 
 void update_int(int int_value, Symbol *head){
-  // update str_value field of symbol in data segment
-  // => the last appended symbol in the table corresponds to
-  // => the symbol to be updated
+  /*
+  update str_value field of symbol in data segment
+  => the last appended symbol in the table corresponds to the symbol to be updated
+  */
   Symbol *temp = head;
   while(temp->next != NULL) temp = temp->next;
-  temp->int_value, int_value;
+  temp->int_value = int_value;
   return;
 }
 
@@ -290,6 +379,7 @@ void update_address(char symbol_name[], int diff, int in_data, Symbol *head){
   Symbol *temp = head;
   while(1){
     if(strcmp(symbol_name, temp->name)==0){
+      // offset for label in data segment is already in bytes
       temp->address = in_data ? BASE_DATA + diff : BASE_TEXT + diff*4;
       return;
     }
