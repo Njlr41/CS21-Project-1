@@ -14,24 +14,24 @@ struct node{
 };
 
 typedef struct instruction Instruction;
-
+  
 struct instruction{
   char mnemonic[100];
-  char type;
-  int target;
+  char target[100];
   int rs;
   int rt;
   int rd;
   int immediate;
 };
 
-int needs_target(char mnem[]);
-void append_symbol(char symbol_name[], int address_val, Symbol **head);
-int symbol_exists(char symbol_name[], Symbol *head);
-void update_address(char symbol_name[], int diff, int in_data, Symbol *head);
-Instruction create_instruction(char* mnemonic, char type, int target, int rs, int rt, int rd, int immediate);
-void update_str(char str_value[], Symbol *head);
-void update_int(int int_value, Symbol *head);
+int NEEDS_TARGET(char mnem[]);
+void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head);
+int SYMBOL_EXISTS(char symbol_name[], Symbol *head);
+void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head);
+Instruction CREATE_INSTRUCTION(Instruction *temp);
+void UPDATE_STR(char str_value[], Symbol *head);
+void UPDATE_INT(int int_value, Symbol *head);
+int REG_NUMBER(char reg_name[]);
 
 int main()
 {
@@ -71,15 +71,15 @@ int main()
         symbol[strlen(symbol)-1] = '\0';
 
         // add symbol to the symbol table
-        if(symbol_exists(symbol, head))
+        if(SYMBOL_EXISTS(symbol, head))
           // symbol was already encountered
           // update address
-          update_address(symbol, byte_counter, 1, head);
+          UPDATE_ADDRESS(symbol, byte_counter, 1, head);
 
         else
           // first encounter of symbol
           // offset (byte_counter) is already in bytes
-          append_symbol(symbol, BASE_DATA + byte_counter, &head);
+          APPEND_SYMBOL(symbol, BASE_DATA + byte_counter, &head);
         printf("=> label");
       }
       else if(symbol[0] == '.'){ // either .asciiz or .word
@@ -118,9 +118,9 @@ int main()
           
           // update str_value of corresponding symbol
           if(symbol[0] == '"')
-            update_str(symbol+1, head);         // remove opening "
+            UPDATE_STR(symbol+1, head);         // remove opening "
           else
-            update_str(symbol, head);
+            UPDATE_STR(symbol, head);
           
           printf("=> string");
         }
@@ -130,7 +130,7 @@ int main()
           => convert string to integer using atoi()
           => increment byte_counter by 4 (size of an integer is 4 bytes)
           */
-          update_int(atoi(symbol), head);
+          UPDATE_INT(atoi(symbol), head);
           byte_counter += 4;
           printf("=> int");
         }
@@ -173,8 +173,8 @@ int main()
             => update string value of corresponding symbol in the table
             => update byte counter by length of the string (+1 for the terminator \0)
             */
-            append_symbol(label_name, BASE_DATA + byte_counter, &head);
-            update_str(str_value, head);
+            APPEND_SYMBOL(label_name, BASE_DATA + byte_counter, &head);
+            UPDATE_STR(str_value, head);
             byte_counter += (strlen(str_value)+1);
           }
           else{
@@ -200,8 +200,8 @@ int main()
             => update integer value of corresponding symbol in the table
             => increment byte counter by 4 (size of an integer is 4 bytes)
             */
-            append_symbol(label_name, BASE_DATA + byte_counter, &head);
-            update_int(atoi(int_value), head);
+            APPEND_SYMBOL(label_name, BASE_DATA + byte_counter, &head);
+            UPDATE_INT(atoi(int_value), head);
             byte_counter+=4;
           }
         }
@@ -213,51 +213,158 @@ int main()
         symbol[strlen(symbol)-1] = '\0';
 
         // add symbol to the symbol table
-        if(symbol_exists(symbol, head))
+        if(SYMBOL_EXISTS(symbol, head))
           // symbol was already encountered
           // update address
-          // update_address(symbol,10,head);
-          update_address(symbol, (line_number - 1), 0, head);
+          // UPDATE_ADDRESS(symbol,10,head);
+          UPDATE_ADDRESS(symbol, (line_number - 1), 0, head);
 
         else
           // first encounter of symbol
-          append_symbol(symbol, BASE_TEXT + (line_number - 1)*4, &head);
+          APPEND_SYMBOL(symbol, BASE_TEXT + (line_number - 1)*4, &head);
 
         printf("=> label");
         }
 
-      else if(c == '\n'){ // potential label or syscall
+      /* else if(c == '\n'){ // potential label or syscall
         if(strcmp(symbol,"syscall")==0){
           strcpy(mnemonic,symbol);
           printf("=> syscall");
         }
         // check if mnemonic needs a target/label
-        else if(needs_target(mnemonic)){
+        else if(NEEDS_TARGET(mnemonic)){
           // mnemonic needs a target/label
           // add symbol to symbol table IF it doesn't exist yet
-          printf("%d",symbol_exists(symbol,head));
-          if(!symbol_exists(symbol, head))
-            append_symbol(symbol, 0, &head);
+          printf("%d",SYMBOL_EXISTS(symbol,head));
+          if(!SYMBOL_EXISTS(symbol, head))
+            APPEND_SYMBOL(symbol, 0, &head);
 
           printf("=> label");
         }
         else printf("=> operand"); // immediate/register operand
-      }
+      } */
 
-      else if(symbol[strlen(symbol) - 1] != ','){ // mnemonic
+      else if(c != '\n'){ // mnemonic
         strcpy(mnemonic, symbol);
         strcpy(temp_instruction->mnemonic, symbol);
         printf("=> mnemonic");
       }
 
-      else printf("=> operand"); // operand
+      else {
+
+        if(IS_RTYPE(mnemonic)){
+          if(strcmp(mnemonic,"jr")==0){ // store to rs
+            temp_instruction->rs = REG_NUMBER(symbol);
+          }
+          
+          else if(strcmp(mnemonic,"move")==0){ // store to rd->rs
+            char operand[5] = {};
+            int i = 0, j = 0;
+
+            for(; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rd = REG_NUMBER(operand);
+            temp_instruction->rs = REG_NUMBER(symbol+(i+1));
+          }
+
+          else{ // store to rd->rs->rt
+            char operand[5] = {};
+            int i = 0, j = 0;
+
+            for(; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rd = REG_NUMBER(operand);
+            
+            strcpy(operand,"\0"); // reset operand
+
+            for(i=i+1, j=0; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rs = REG_NUMBER(operand);
+            temp_instruction->rt = REG_NUMBER(symbol+(i+1));
+          }
+          printf("=> operand"); // operand
+        }
+
+        else if(IS_ITYPE(mnemonic)){
+          // lui, lw, sw
+          if(mnemonic[0] == 'l' || mnemonic[1] == 'w'){ // store to rt,imm
+             char operand[5] = {};
+              int i = 0, j = 0;
+
+              for(; symbol[i]!=','; i++, j++)
+                operand[j] = symbol[i];
+              temp_instruction->rt = REG_NUMBER(operand);
+
+              strcpy(operand,"\0"); // reset reg_name
+
+              for(i=i+1, j=0; symbol[i]!='\0' || symbol[i]!='('; i++, j++)
+                operand[j] = symbol[i];
+              temp_instruction->immediate = atoi(operand);
+
+              // lw, sw
+              if(mnemonic[1] == 'w'){
+                strcpy(operand,"\0");
+                for(i=i+1, j=0; symbol[i]!=')'; i++, j++)
+                  operand[j] = symbol[i];
+                temp_instruction->rs = REG_NUMBER(operand);
+              }
+          }
+          
+          // beq, bne
+          else if(mnemonic[0]=='b'){ // store to rs,rt,target
+            char operand[5] = {};
+            int i = 0, j = 0;
+
+            for(; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rs = REG_NUMBER(operand);
+            
+            strcpy(operand,"\0"); // reset operand
+
+            for(i=i+1, j=0; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rt = REG_NUMBER(operand);
+            strcpy(temp_instruction->target,symbol+(i+1));
+          } 
+
+          // addi, addiu
+          else{ // store to rt,rs,imm
+            char operand[5] = {};
+            int i = 0, j = 0;
+
+            for(; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rt = REG_NUMBER(operand);
+            
+            strcpy(operand,"\0"); // reset operand
+
+            for(i=i+1, j=0; symbol[i]!=','; i++, j++)
+              operand[j] = symbol[i];
+            temp_instruction->rs = REG_NUMBER(operand);
+            temp_instruction->immediate = atoi(symbol+(i+1));
+          }
+          printf("=> operand"); // operand
+        }
+
+        else{
+          if(!SYMBOL_EXISTS(symbol, head))
+            APPEND_SYMBOL(symbol, 0, &head);
+          strcpy(temp_instruction->target, symbol);
+          printf("=> label");
+        }
+        
+      }
     }
 
     if(c == '\n'){
-      InstructionList[line_number - 1] = create_instruction(temp_instruction->mnemonic, temp_instruction->type, temp_instruction->target, temp_instruction->rs, temp_instruction->rt, temp_instruction->rd, temp_instruction->immediate);
-      printf("\n[Line %d]", ++line_number);
+      InstructionList[line_number - 1] = CREATE_INSTRUCTION(temp_instruction->mnemonic);
       // reset
       strcpy(mnemonic,"\0");
+      free(temp_instruction);
+      temp_instruction = (Instruction *)malloc(sizeof(Instruction));
+      // line number
+      printf("\n[Line %d]", ++line_number);
+      
     }
       
   }
@@ -268,6 +375,7 @@ int main()
   {
     printf("%s\n", (InstructionList[i]).mnemonic);
   }
+
   // print symbol table
   Symbol *temp = head;
   while(temp){
@@ -306,18 +414,18 @@ int main()
   return 0;
 }
 
-Instruction create_instruction(char* mnemonic, char type, int target, int rs, int rt, int rd, int immediate){
+Instruction CREATE_INSTRUCTION(Instruction *temp){
   Instruction *A = (Instruction *)malloc(sizeof(Instruction));
-  strcpy(A->mnemonic, mnemonic);
-  A->type = type;
-  A->target = target;
-  A->rs = rs;
-  A->rt = rt;
-  A->rd = rd;
-  A->immediate = immediate;
+  strcpy(A->mnemonic, temp->mnemonic);
+  strcpy(A->target, temp->target);
+  A->rs = temp->rs;
+  A->rt = temp->rt;
+  A->rd = temp->rd;
+  A->immediate = temp->immediate;
   return *A;
 }
-int needs_target(char mnem[]){
+
+int NEEDS_TARGET(char mnem[]){
   // check if mnemonic of instruction associated with operand needs target
   char lst[6][5] = {"beq", "bne", "lw", "sw", "j", "jal"};
   for(int i=0; i<6; i++)
@@ -325,7 +433,31 @@ int needs_target(char mnem[]){
   return 0;
 }
 
-void append_symbol(char symbol_name[], int address_val, Symbol **head){
+int IS_RTYPE(char mnem[]){
+  // check if mnemonic of instruction is R-Type
+  char lst[7][5] = {"add","sub","and","or","slt","move","jr"};
+  for(int i=0; i<7; i++)
+    if(strcmp(lst[i], mnem)==0) return 1;
+  return 0;
+}
+
+int IS_ITYPE(char mnem[]){
+  // check if mnemonic of instruction is I-Type
+  char lst[7][6] = {"addi","addiu","lui","lw","sw","beq","bne"};
+  for(int i=0; i<7; i++)
+    if(strcmp(lst[i], mnem)==0) return 1;
+  return 0;
+}
+
+int IS_JTYPE(char mnem[]){
+  // check if mnemonic of instruction is I-Type
+  char lst[2][6] = {"j","jal"};
+  for(int i=0; i<2; i++)
+    if(strcmp(lst[i], mnem)==0) return 1;
+  return 0;
+}
+
+void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head){
   // create new symbol for label
   Symbol *new_symbol = (Symbol *)malloc(sizeof(Symbol));
   strcpy(new_symbol->name, symbol_name);
@@ -344,7 +476,7 @@ void append_symbol(char symbol_name[], int address_val, Symbol **head){
   }
 }
 
-void update_str(char str_value[], Symbol *head){
+void UPDATE_STR(char str_value[], Symbol *head){
   /*
   update str_value field of symbol in data segment
   => the last appended symbol in the table corresponds to the symbol to be updated
@@ -363,7 +495,7 @@ void update_str(char str_value[], Symbol *head){
   return;
 }
 
-void update_int(int int_value, Symbol *head){
+void UPDATE_INT(int int_value, Symbol *head){
   /*
   update str_value field of symbol in data segment
   => the last appended symbol in the table corresponds to the symbol to be updated
@@ -374,7 +506,7 @@ void update_int(int int_value, Symbol *head){
   return;
 }
 
-void update_address(char symbol_name[], int diff, int in_data, Symbol *head){
+void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head){
   // update address of symbol that was already encountered
   Symbol *temp = head;
   while(1){
@@ -387,7 +519,7 @@ void update_address(char symbol_name[], int diff, int in_data, Symbol *head){
   }
 }
 
-int symbol_exists(char symbol_name[], Symbol *head){
+int SYMBOL_EXISTS(char symbol_name[], Symbol *head){
   // check if symbol is already in the symbol table
   Symbol *temp = head;
   while(temp){
@@ -395,4 +527,28 @@ int symbol_exists(char symbol_name[], Symbol *head){
     temp = temp->next;
   }
   return 0;
+}
+
+int REG_NUMBER(char reg_name[]){
+    char num[2] = {reg_name[2],'\0'}; 
+    switch(reg_name[1]){
+        case 'v':
+            return (2 + atoi(num));
+        case 'a':
+            return (reg_name[2] == 't' ? 1 : 4+atoi(num));
+        case 't':
+            return (atoi(num) > 7 ? 24 + (atoi(num)-8) : 8 + atoi(num));
+        case 's':
+            return (reg_name[2] == 'p' ? 29 : 16 + atoi(num));
+        case 'k':
+            return (26 + atoi(num));
+        case 'g':
+            return 28;
+        case 'f':
+            return 30;
+        case 'r':
+            return 31;
+        default:
+            return 0;
+    }
 }
