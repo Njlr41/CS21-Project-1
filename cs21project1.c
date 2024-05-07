@@ -268,14 +268,17 @@ int main()
           }
           
           // move
-          else if(strcmp(mnemonic,"move")==0){ // store to rd->rs
+          else if(strcmp(mnemonic,"move")==0){ // store to rd->rs($0)->rt
             char operand[5] = {};
             int i = 0, j = 0;
-
+            
+            strcpy(temp_instruction->mnemonic,"addu");
+            strcpy(mnemonic,"addu");
             for(; symbol[i]!=','; i++, j++)
               operand[j] = symbol[i];
             temp_instruction->rd = REG_NUMBER(operand);
-            temp_instruction->rs = REG_NUMBER(symbol+(i+1));
+            temp_instruction->rs = 0;
+            temp_instruction->rt = REG_NUMBER(symbol+(i+1));
           }
 
           // add, sub, and, or, slt
