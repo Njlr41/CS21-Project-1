@@ -33,6 +33,8 @@ void UPDATE_STR(char str_value[], Symbol *head);
 void UPDATE_INT(int int_value, Symbol *head);
 int REG_NUMBER(char reg_name[]);
 Instruction* RESET_TEMP();
+void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable);
+void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER);
 
 int main()
 {
@@ -52,10 +54,11 @@ int main()
   // Get NUMBER OF LINES
   fscanf(fp, "%d", &N_LINES);
 
-  
-
   // Initialize SYMBOL TABLE
   Symbol *head = NULL;
+
+  // Initialize MEMORY
+  char MemoryFile[1000] = {};
 
   // Initialize TEMP_INSTRUCTION and LIST OF INSTRUCTIONS
   Instruction *temp_instruction = RESET_TEMP();
@@ -371,6 +374,7 @@ int main()
     }
 
     char x = c; // temporarily store value of delimiter for later usage
+    int IS_DATA = strcmp(symbol,".data")==0;
     int to_break = fscanf(fp, "%s%c", &symbol, &c);   // continue scan
                                                       // to_break == EOF if end of file was reached
     
@@ -396,6 +400,10 @@ int main()
       free(temp_instruction);
       temp_instruction = RESET_TEMP();
 
+      if(IN_DATA_SEGMENT == 1 && !IS_DATA){
+        ADD_TO_MEMORY(MemoryFile, head);
+      }
+
       // (3)
       if(to_break==EOF)
         break;
@@ -407,7 +415,42 @@ int main()
   PRINT_INSTRUCTIONS(InstructionList, N_LINES);
   PRINT_SYMBOL_TABLE(head, output);
   PRINT_DATA_SEGMENT(head);
+  PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
   return 0;
+}
+
+void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
+  Symbol *data_label = SymbolTable;
+  while(data_label->next) data_label = data_label->next;
+  printf("name: %s, str_value: %s, int_value: %d", data_label->name, data_label->str_value, data_label->int_value);
+  printf("\noffset: %d\n", data_label->address-BASE_DATA);
+  if(strcmp(data_label->str_value,"\0")!=0){ // string
+    strcpy(MemoryFile + (data_label->address - BASE_DATA), data_label->str_value);
+    printf("\nMemoryFile[%d] = %s\n", data_label->address - BASE_DATA, data_label->str_value);
+  }
+  else{ // integer
+    for(int i=0; i<4; i++){
+      MemoryFile[data_label->address - BASE_DATA + i] = data_label->int_value >> (32-(i*8));
+      printf("MemoryFile[%d] = %d", data_label->address - BASE_DATA, data_label->int_value >> (32-(i*8)));
+    }
+  }
+}
+
+void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
+  int total = (((int)(BYTE_COUNTER/4))+1)*4;
+  printf("\n\nMemory Array\n");
+  for(int i=0; i<total/4; i++){
+      for(int j=0; j<4; j++)
+          printf("| %02X %c", MemoryFile[4*i+j], j==3 ? '|' : '\0');
+      printf("\n");
+  }
+
+  printf("\nASCII\n");
+  for(int i=0; i<total/4; i++){
+      for(int j=0; j<4; j++)
+          printf("| %c %c", MemoryFile[4*i+j] == '\0' ? ' ' : MemoryFile[4*i+j], j==3 ? '|' : '\0');
+      printf("\n");
+  }
 }
 
 void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES){
