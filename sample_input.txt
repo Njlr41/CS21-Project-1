@@ -1,6 +1,7 @@
 24
 .text
 main: syscall
+GCD($a0,$a1)
 move $s0,$v0
 move $a0,$s0
 j log

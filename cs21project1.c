@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "macro_file.c"
 #define BASE_TEXT 0x00400000 // base address for the text segment
 #define BASE_DATA 0x10000000 // base address for the data segment
 typedef struct node Symbol;
@@ -266,6 +267,75 @@ int main()
         printf("=> syscall");
       }
 
+      else if(symbol[strlen(symbol)-1] == ')'){
+        char macro_type[20] = {};
+        char first_input[5] = {};
+        char second_input[5] = {};
+        int i = 0, j = 0;
+        for(; symbol[i] != '('; i++, j++){
+          macro_type[j] = symbol[i];
+        }
+        // Two Parameters
+        if(strcmp(macro_type, "GCD") == 0){
+          j = 0;
+          i++;
+          for(; symbol[i] != ','; i++, j++){
+          first_input[j] = symbol[i];
+          }
+
+          j = 0;
+          i++;
+          for(; symbol[i] != ')'; i++, j++){
+          second_input[j] = symbol[i];
+          }
+        }
+        // One Parameters
+        else if(strcmp(macro_type, "print_str") == 0){
+          j = 0;
+          i++;
+          for(; symbol[i] != ')'; i++, j++){
+          first_input[j] = symbol[i];
+          }
+        }
+        // Two Parameters
+        else if(strcmp(macro_type, "read_str") == 0){
+          j = 0;
+          i++;
+          for(; symbol[i] != ','; i++, j++){
+          first_input[j] = symbol[i];
+          }
+
+          j = 0;
+          i++;
+          for(; symbol[i] != ')'; i++, j++){
+          second_input[j] = symbol[i];
+          }
+        }
+        // One Parameter
+        else if(strcmp(macro_type, "print_integer") == 0){
+          j = 0;
+          i++;
+          for(; symbol[i] != ')'; i++, j++){
+          first_input[j] = symbol[i];
+          }
+        }
+        // One Parameter
+        else if(strcmp(macro_type, "read_integer") == 0){
+          j = 0;
+          i++;
+          for(; symbol[i] != ')'; i++, j++){
+          first_input[j] = symbol[i];
+          }
+        }
+        // No Parameter
+        else if(strcmp(macro_type, "exit") == 0){
+          
+        }
+        // ERROR CHECK
+        else{
+          printf("ERROR IN MACRO READ");
+        }
+      }
       else {
         /*
         OPERAND/S of the Instruction
@@ -289,8 +359,9 @@ int main()
             
             strcpy(temp_instruction->mnemonic,"addu");
             strcpy(mnemonic,"addu");
-            for(; symbol[i]!=','; i++, j++)
+            for(; symbol[i]!=','; i++, j++){
               operand[j] = symbol[i];
+            }
             temp_instruction->rd = REG_NUMBER(operand);
             temp_instruction->rs = 0;
             temp_instruction->rt = REG_NUMBER(symbol+(i+1));
