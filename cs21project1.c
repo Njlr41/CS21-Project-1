@@ -528,8 +528,8 @@ void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
   }
   else{ // integer
     for(int i=0; i<4; i++){
-      MemoryFile[data_label->address - BASE_DATA + i] = data_label->int_value >> (32-((4-(i+1))*8));
-      printf("MemoryFile[%d] = %d", data_label->address - BASE_DATA, data_label->int_value >> (32-(i*8)));
+      MemoryFile[data_label->address - BASE_DATA + i] = data_label->int_value >> (32-(((i+1))*8));
+      printf("MemoryFile[%d] = %d >> %d", data_label->address - BASE_DATA+i, data_label->int_value, (32-(((i+1))*8)));
     }
   }
 }
