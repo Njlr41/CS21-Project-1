@@ -41,6 +41,7 @@ void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
 int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
+Symbol *GET_TAIL(Symbol *head);
 
 int main()
 {
@@ -160,7 +161,10 @@ int main()
           (3) Increment BYTE_COUNTER by 4 (size of an integer is 4 bytes)
           */
           UPDATE_INT(atoi(symbol), head);
-          BYTE_COUNTER += 4;
+          Symbol *tail = GET_TAIL(head);
+          BYTE_COUNTER = BYTE_COUNTER % 4 == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));
+          UPDATE_ADDRESS(tail->name, BYTE_COUNTER, 1, head);
+          BYTE_COUNTER+=4;
           printf("=> int");
         }
         else{
@@ -211,10 +215,12 @@ int main()
               label_name[j] = symbol[i];
             for(i=i+1,j=0;symbol[i]!=')';i++,j++)
               int_value[j] = symbol[i];
-
+            
+            BYTE_COUNTER = (BYTE_COUNTER % 4) == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));
+            printf("$s");
             APPEND_SYMBOL(label_name, BASE_DATA + BYTE_COUNTER, &head);
             UPDATE_INT(atoi(int_value), head);
-            BYTE_COUNTER+=4;
+            BYTE_COUNTER += 4;
           }
         }
       }
@@ -436,7 +442,7 @@ void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
   }
   else{ // integer
     for(int i=0; i<4; i++){
-      MemoryFile[data_label->address - BASE_DATA + i] = data_label->int_value >> (32-(i*8));
+      MemoryFile[data_label->address - BASE_DATA + i] = data_label->int_value >> (32-((4-(i+1))*8));
       printf("MemoryFile[%d] = %d", data_label->address - BASE_DATA, data_label->int_value >> (32-(i*8)));
     }
   }
@@ -587,6 +593,13 @@ void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head){
     while(temp->next) temp = temp->next;
     temp->next = new_symbol;
   }
+}
+
+Symbol *GET_TAIL(Symbol *head){
+  Symbol *temp = head;
+  while(temp->next)
+    temp = temp->next;
+  return temp;
 }
 
 void UPDATE_STR(char str_value[], Symbol *head){
