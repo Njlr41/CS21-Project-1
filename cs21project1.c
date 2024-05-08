@@ -317,8 +317,8 @@ int main()
           second_input[j] = symbol[i];
           }
 
-          strcpy(temp_instruction->rs, first_input);
-          temp_instruction->immediate = REG_NUMBER(second_input);
+          strcpy(temp_instruction->target, first_input);
+          temp_instruction->immediate = atoi(second_input);
         }
         // One Parameter
         else if(strcmp(macro_type, "print_integer") == 0){
@@ -340,7 +340,7 @@ int main()
           }
 
           strcpy(temp_instruction->mnemonic, "read_integer");
-          temp_instruction->rs = REG_NUMBER(first_input);
+          temp_instruction->immediate = atoi(first_input);
         }
         // No Parameter
         else if(strcmp(macro_type, "exit") == 0){
