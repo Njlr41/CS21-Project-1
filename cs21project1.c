@@ -260,35 +260,34 @@ int main()
         strcpy(temp_instruction->mnemonic, symbol);
         printf("=> syscall");
       }
-      else if(symbol[strlen(symbol)-1] == ')' && strcmp(mnemonic, "\0") == 0){
+
+      else if(symbol[strlen(symbol)-1] == ')'){
         char macro_type[20] = {};
         char first_input[5] = {};
         char second_input[5] = {};
         int i = 0, j = 0;
-
-        for(; symbol[i] != "("; i++, j++){
+        for(; symbol[i] != '('; i++, j++){
           macro_type[j] = symbol[i];
         }
         // Two Parameters
         if(strcmp(macro_type, "GCD") == 0){
           j = 0;
           i++;
-          for(; symbol[i] != ","; i++, j++){
+          for(; symbol[i] != ','; i++, j++){
           first_input[j] = symbol[i];
           }
 
           j = 0;
           i++;
-          for(; symbol[i] != ")"; i++, j++){
+          for(; symbol[i] != ')'; i++, j++){
           second_input[j] = symbol[i];
           }
-          printf("%s, %s", first_input, second_input);
         }
         // One Parameters
         else if(strcmp(macro_type, "print_str") == 0){
           j = 0;
           i++;
-          for(; symbol[i] != ")"; i++, j++){
+          for(; symbol[i] != ')'; i++, j++){
           first_input[j] = symbol[i];
           }
         }
@@ -296,13 +295,13 @@ int main()
         else if(strcmp(macro_type, "read_str") == 0){
           j = 0;
           i++;
-          for(; symbol[i] != ","; i++, j++){
+          for(; symbol[i] != ','; i++, j++){
           first_input[j] = symbol[i];
           }
 
           j = 0;
           i++;
-          for(; symbol[i] != ")"; i++, j++){
+          for(; symbol[i] != ')'; i++, j++){
           second_input[j] = symbol[i];
           }
         }
@@ -310,7 +309,7 @@ int main()
         else if(strcmp(macro_type, "print_integer") == 0){
           j = 0;
           i++;
-          for(; symbol[i] != ")"; i++, j++){
+          for(; symbol[i] != ')'; i++, j++){
           first_input[j] = symbol[i];
           }
         }
@@ -318,7 +317,7 @@ int main()
         else if(strcmp(macro_type, "read_integer") == 0){
           j = 0;
           i++;
-          for(; symbol[i] != ")"; i++, j++){
+          for(; symbol[i] != ')'; i++, j++){
           first_input[j] = symbol[i];
           }
         }
