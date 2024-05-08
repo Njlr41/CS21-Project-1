@@ -12,8 +12,8 @@ int GCD(int x, int y){
 void print_str(char* string){
   printf("%s", string);
 }
-void read_str(){
-
+void read_str(char* string, int length){
+  fgets(string, length, stdin);
 } // Ask Ma'am regarding parameters
 void print_integer(int number){
   printf("%d", number);
