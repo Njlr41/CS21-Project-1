@@ -259,7 +259,9 @@ int main()
         strcpy(temp_instruction->mnemonic, symbol);
         printf("=> syscall");
       }
-
+      else if(symbol[strlen(symbol)-1] == ')' && strcmp(mnemonic, "\0") == 0){
+        // STUFF
+      }
       else {
         /*
         OPERAND/S of the Instruction
