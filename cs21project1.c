@@ -275,6 +275,8 @@ int main()
         for(; symbol[i] != '('; i++, j++){
           macro_type[j] = symbol[i];
         }
+
+        strcpy(temp_instruction->mnemonic, macro_type);
         // Two Parameters
         if(strcmp(macro_type, "GCD") == 0){
           j = 0;
@@ -288,8 +290,6 @@ int main()
           for(; symbol[i] != ')'; i++, j++){
           second_input[j] = symbol[i];
           }
-
-          strcpy(temp_instruction->mnemonic, "GCD");
           temp_instruction->rs = REG_NUMBER(first_input);
           temp_instruction->rt = REG_NUMBER(second_input);
         }
@@ -301,8 +301,7 @@ int main()
           first_input[j] = symbol[i];
           }
 
-          strcpy(temp_instruction->mnemonic, "print_str");
-          temp_instruction->rs = REG_NUMBER(first_input);
+          strcpy(temp_instruction->target, first_input);
         }
         // Two Parameters
         else if(strcmp(macro_type, "read_str") == 0){
@@ -318,9 +317,8 @@ int main()
           second_input[j] = symbol[i];
           }
 
-          strcpy(temp_instruction->mnemonic, "read_str");
-          temp_instruction->rs = REG_NUMBER(first_input);
-          temp_instruction->rt = REG_NUMBER(second_input);
+          strcpy(temp_instruction->rs, first_input);
+          temp_instruction->immediate = REG_NUMBER(second_input);
         }
         // One Parameter
         else if(strcmp(macro_type, "print_integer") == 0){
