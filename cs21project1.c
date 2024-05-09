@@ -290,6 +290,7 @@ int main()
           for(; symbol[i] != ')'; i++, j++){
           second_input[j] = symbol[i];
           }
+
           temp_instruction->rs = REG_NUMBER(first_input);
           temp_instruction->rt = REG_NUMBER(second_input);
         }
@@ -318,7 +319,11 @@ int main()
           }
 
           strcpy(temp_instruction->target, first_input);
+<<<<<<< Updated upstream
           temp_instruction->immediate = atoi(second_input);
+=======
+          temp_instruction->immediate = REG_NUMBER(second_input);
+>>>>>>> Stashed changes
         }
         // One Parameter
         else if(strcmp(macro_type, "print_integer") == 0){
@@ -328,7 +333,6 @@ int main()
           first_input[j] = symbol[i];
           }
 
-          strcpy(temp_instruction->mnemonic, "print_integer");
           temp_instruction->rs = REG_NUMBER(first_input);
         }
         // One Parameter
@@ -339,8 +343,12 @@ int main()
           first_input[j] = symbol[i];
           }
 
+<<<<<<< Updated upstream
           strcpy(temp_instruction->mnemonic, "read_integer");
           temp_instruction->immediate = atoi(first_input);
+=======
+          temp_instruction->rs = REG_NUMBER(first_input);
+>>>>>>> Stashed changes
         }
         // No Parameter
         else if(strcmp(macro_type, "exit") == 0){
