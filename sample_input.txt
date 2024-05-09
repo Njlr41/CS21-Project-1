@@ -2,6 +2,8 @@
 .text
 main: syscall
 GCD($a0,$a1)
+li $a0,500
+la $a1,123($a2)
 move $s0,$v0
 move $a0,$s0
 j log

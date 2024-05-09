@@ -39,6 +39,7 @@ void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER);
 void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
 void PRINT_DATA_SEGMENT(Symbol *head);
 void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
+int IS_PSEUDO(char mnem[]);
 int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
@@ -267,10 +268,61 @@ int main()
         printf("=> syscall");
       }
 
+      // PSEUDO INSTRUCTIONS
+      else if(strcmp(mnemonic, "li") == 0){
+        char first_input[100] = {};
+        char second_input[100] = {};
+        char third_input[100] = {};
+        int j = 0, i = 0;
+        j = 0;
+        i++;
+        for(; symbol[i] != ','; i++, j++){
+        first_input[j] = symbol[i];
+        }
+
+        j = 0;
+        i++;
+        for(; symbol[i] != ')'; i++, j++){
+        second_input[j] = symbol[i];
+        }
+
+        temp_instruction->rs = REG_NUMBER(first_input);
+        temp_instruction->immediate = atoi(second_input);
+      }
+      
+      else if(strcmp(mnemonic, "la") == 0){
+        char first_input[100] = {};
+        char second_input[100] = {};
+        char third_input[100] = {};
+        int j = 0, i = 0;
+        j = 0;
+        i++;
+        for(; symbol[i] != ','; i++, j++){
+          first_input[j] = symbol[i];
+        }
+
+        j = 0;
+        i++;
+        for(; symbol[i] != '('; i++, j++){
+          second_input[j] = symbol[i];
+        }
+
+        j = 0;
+        i++;
+        for(; symbol[i] != ')'; i++, j++){
+          third_input[j] = symbol[i];
+        }
+
+        temp_instruction->rt = REG_NUMBER(first_input);
+        temp_instruction->immediate = atoi(second_input);
+        temp_instruction->rs = REG_NUMBER(third_input);
+      }
+
       else if(symbol[strlen(symbol)-1] == ')' && strcmp(mnemonic, "\0") == 0){
         char macro_type[20] = {};
-        char first_input[5] = {};
-        char second_input[5] = {};
+        char first_input[100] = {};
+        char second_input[100] = {};
+        char third_input[100] = {};
         int i = 0, j = 0;
         for(; symbol[i] != '('; i++, j++){
           macro_type[j] = symbol[i];
@@ -561,7 +613,7 @@ void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES){
       if(inst->rd != -1) printf("[rd: %d] ", inst->rd);
       if(inst->rt != -1) printf("[rt: %d] ", inst->rt);
       if(inst->rs != -1) printf("[rs: %d] ", inst->rs);
-      if(IS_ITYPE(inst->mnemonic) && inst->mnemonic[0]!='b') printf("[imm: %d] ", inst->immediate);
+      if((IS_ITYPE(inst->mnemonic) && inst->mnemonic[0]!='b') || IS_PSUEDO(inst->mnemonic)) printf("[imm: %d] ", inst->immediate);
       if(strcmp(inst->target,"\0")!=0) printf("[target: %s] ", inst->target);
       printf("\n");
     }
@@ -634,6 +686,14 @@ int NEEDS_TARGET(char mnem[]){
   // check if mnemonic of instruction associated with operand needs target
   char lst[6][5] = {"beq", "bne", "lw", "sw", "j", "jal"};
   for(int i=0; i<6; i++)
+    if(strcmp(lst[i], mnem)==0) return 1;
+  return 0;
+}
+
+int IS_PSUEDO(char mnem[]){
+// check if mnemonic of instruction is pseudoinstruction
+  char lst[7][5] = {"li", "la"};
+  for(int i=0; i<7; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
 }
