@@ -35,7 +35,7 @@ void UPDATE_STR(char str_value[], Symbol *head);
 void UPDATE_INT(int int_value, Symbol *head);
 int REG_NUMBER(char reg_name[]);
 Instruction* RESET_TEMP();
-void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable);
+void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable); 
 void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER);
 void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
 void PRINT_DATA_SEGMENT(Symbol *head);
@@ -516,6 +516,10 @@ int main()
               operand[j] = symbol[i];
             temp_instruction->rt = REG_NUMBER(operand);
             strcpy(temp_instruction->target,symbol+(i+1));
+
+            if(!SYMBOL_EXISTS(symbol, head)) APPEND_SYMBOL(symbol, 0, &head);
+            strcpy(temp_instruction->target, symbol+(i+1));
+            printf("%s", temp_instruction->target);
           } 
 
           // addi, addiu
@@ -623,12 +627,25 @@ int main()
       |funct |rs   |rt   |immediate       |
       |31:26 |25:21|20:16|15:0            |
       */
+    	if (strcmp(InstructionList[line]->mnemonic, "addi") == 0) machine_code = InstructionList[line]->immediate + (8 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0) machine_code = InstructionList[line]->immediate + (9 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0) machine_code = InstructionList[line]->immediate + (15 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0) machine_code = InstructionList[line]->immediate + (35 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0) machine_code = InstructionList[line]->immediate + (13 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0) machine_code = InstructionList[line]->immediate + (45 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0) machine_code = 0; // Not Done
+    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0) machine_code = 0; // Not Done
+
+      machine_code = machine_code | (InstructionList[line]->rt << 16);
+      machine_code = machine_code | (InstructionList[line]->rs << 21);
+    }
+
+    else if(IS_JTYPE(InstructionList[line]->mnemonic)){
       continue;
     }
 		char *machine_code_string = GET_BINARY(machine_code);
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
-    
   }
   return 0;
 }

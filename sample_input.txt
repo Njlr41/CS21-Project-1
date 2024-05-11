@@ -1,8 +1,4 @@
-6
+3
 .text
-li $a0,10752325
-main: add $t0,$t1,$t2
-sub $t0,$t1,$t2
-and $t0,$t1,$t2
-check: slt $t0,$t1,$t2
-or $t0,$t1,$t2
+lw $t0,50($t1)
+sw $t0,50($t1)
