@@ -641,7 +641,8 @@ int main()
     }
 
     else if(IS_JTYPE(InstructionList[line]->mnemonic)){
-      continue;
+      if (strcmp(InstructionList[line]->mnemonic, "j") == 0);
+      if (strcmp(InstructionList[line]->mnemonic, "jal") == 0);
     }
 		char *machine_code_string = GET_BINARY(machine_code);
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
