@@ -41,7 +41,6 @@ void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
 void PRINT_DATA_SEGMENT(Symbol *head);
 void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
 int IS_PSEUDO(char mnem[]);
-int IS_PSEUDO(char mnem[]);
 int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
@@ -597,15 +596,14 @@ int main()
 
   // SECOND PASS
   int machine_code;
-  /*
   for (int line = 0; line < INST_COUNTER; line++){
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
-      
+      /*
       R-TYPE INSTRUCTION
       |000000|XXXXX|XXXXX|XXXXX|00000|XXXXXX|
       |opcode|rs   |rt   |rd   |shamt|funct |
       |31:26 |25:21|20:16|15:11|10:6 |5:0   |
-      
+      */
 
     	if (strcmp(InstructionList[line]->mnemonic, "add") == 0) machine_code = 32;
 			else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0) machine_code = 34;
@@ -632,7 +630,6 @@ int main()
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
     
   }
-  */
   return 0;
 }
 
