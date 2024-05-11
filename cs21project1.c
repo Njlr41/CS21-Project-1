@@ -249,7 +249,7 @@ int main()
         printf("=> label");
       }
 
-      else if(c != '\n'){ 
+      else if(c != '\n' && strcmp(mnemonic,"\0")==0){ 
         /*
         MNEMONIC Definition
         (1) Store the MNEMONIC in a temporary variable 'mnemonic'
@@ -592,29 +592,22 @@ int main()
   // SECOND PASS
   int machine_code;
   for (int line = 1; line < (sizeof(InstructionList) / sizeof(InstructionList[0])); line++){
-    int temp = 0;
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
-    	if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
-    	  machine_code = 32;
-    	}
-			else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0){
-				machine_code = 34;
-			}
-			else if (strcmp(InstructionList[line]->mnemonic, "and") == 0){
-				machine_code = 36;
-			}
-			else if (strcmp(InstructionList[line]->mnemonic, "or") == 0){
-				machine_code = 37;
-			}
-			else if (strcmp(InstructionList[line]->mnemonic, "slt") == 0){
-				machine_code = 42;
-			}
-			temp = InstructionList[line]->rd << 11;
-			machine_code = temp | machine_code;
-			temp = InstructionList[line]->rt << 16;
-			machine_code = temp | machine_code;
-			temp = InstructionList[line]->rs << 21;
-			machine_code = temp | machine_code;
+      /*
+      R-TYPE INSTRUCTION
+      |000000|XXXXX|XXXXX|XXXXX|00000|XXXXXX|
+      |opcode|rs   |rt   |rd   |shamt|funct |
+      |31:26 |25:21|20:16|15:11|10:6 |5:0   |
+      */
+    	if (strcmp(InstructionList[line]->mnemonic, "add") == 0) machine_code = 32;
+			else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0) machine_code = 34;
+			else if (strcmp(InstructionList[line]->mnemonic, "and") == 0) machine_code = 36;
+			else if (strcmp(InstructionList[line]->mnemonic, "or") == 0) machine_code = 37;
+			else if (strcmp(InstructionList[line]->mnemonic, "slt") == 0) machine_code = 42;
+
+			machine_code = machine_code | (InstructionList[line]->rd << 11);
+			machine_code = machine_code | (InstructionList[line]->rt << 16);
+			machine_code = machine_code | (InstructionList[line]->rs << 21);
 		}
 
 		char *machine_code_string = GET_BINARY(machine_code);
