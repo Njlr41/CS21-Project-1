@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "macro_file.c"
 #define BASE_TEXT 0x00400000 // base address for the text segment
 #define BASE_DATA 0x10000000 // base address for the data segment
@@ -44,6 +45,7 @@ int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
 Symbol *GET_TAIL(Symbol *head);
+char *GET_BINARY(int number);
 
 int main()
 {
@@ -571,7 +573,7 @@ int main()
       temp_instruction = RESET_TEMP();
 
       if(IN_DATA_SEGMENT == 1 && !IS_DATA){
-        ADD_TO_MEMORY(MemoryFile, head);
+    		ADD_TO_MEMORY(MemoryFile, head);
       }
 
       // (3)
@@ -590,11 +592,33 @@ int main()
   // SECOND PASS
   int machine_code;
   for (int line = 1; line < (sizeof(InstructionList) / sizeof(InstructionList[0])); line++){
-    printf("%s\n", InstructionList[line]->mnemonic);
-    if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
-      machine_code = 34775072;
-    }
-    fprintf(machinecode, "%s\n", machine_code);
+    int temp = 0;
+		if (IS_RTYPE(InstructionList[line]->mnemonic)){
+    	if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
+    	  machine_code = 32;
+    	}
+			else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0){
+				machine_code = 34;
+			}
+			else if (strcmp(InstructionList[line]->mnemonic, "and") == 0){
+				machine_code = 36;
+			}
+			else if (strcmp(InstructionList[line]->mnemonic, "or") == 0){
+				machine_code = 37;
+			}
+			else if (strcmp(InstructionList[line]->mnemonic, "slt") == 0){
+				machine_code = 42;
+			}
+			temp = InstructionList[line]->rd << 11;
+			machine_code = temp | machine_code;
+			temp = InstructionList[line]->rt << 16;
+			machine_code = temp | machine_code;
+			temp = InstructionList[line]->rs << 21;
+			machine_code = temp | machine_code;
+		}
+
+		char *machine_code_string = GET_BINARY(machine_code);
+    fprintf(machinecode, "%0*s\n", 32, machine_code_string);
   }
   return 0;
 }
@@ -829,6 +853,13 @@ int SYMBOL_EXISTS(char symbol_name[], Symbol *head){
     temp = temp->next;
   }
   return 0;
+}
+
+char *GET_BINARY(int number){
+    static char BINARY_STR[33] = {};
+    for(int i=31; i>=0; number/=2, i--)
+        BINARY_STR[i] = number%2 == 0 ? '0' : '1';
+    return BINARY_STR;
 }
 
 int REG_NUMBER(char reg_name[]){

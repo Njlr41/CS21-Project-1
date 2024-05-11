@@ -1,4 +1,7 @@
-3
+6
 .text
-li $a0,2147483647
-syscall
+add $t0,$t1,$t2
+sub $t0,$t1,$t2
+and $t0,$t1,$t2
+slt $t0,$t1,$t2
+or $t0,$t1,$t2

@@ -1,1 +1,1 @@
-MNEMONIC
+slt
