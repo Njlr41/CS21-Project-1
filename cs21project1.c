@@ -596,11 +596,7 @@ int main()
 
   // SECOND PASS
   int machine_code;
-<<<<<<< Updated upstream
   for (int line = 0; line < INST_COUNTER; line++){
-=======
-  for (int line = 1; line < (sizeof(InstructionList) / sizeof(InstructionList[0]) - 1); line++){
->>>>>>> Stashed changes
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
       /*
       R-TYPE INSTRUCTION

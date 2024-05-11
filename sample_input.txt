@@ -1,6 +1,7 @@
-5
+6
 .text
 add $t0,$t1,$t2
+li $t0,5000
 sub $t0,$t1,$t2
 and $t0,$t1,$t2
 slt $t0,$t1,$t2

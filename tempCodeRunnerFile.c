@@ -1,1 +1,1 @@
-slt
+INST_COUNTER
