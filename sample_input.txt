@@ -1,6 +1,6 @@
 6
 .text
-li $a0,5000
+li $a0,10752325
 main: add $t0,$t1,$t2
 sub $t0,$t1,$t2
 and $t0,$t1,$t2

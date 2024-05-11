@@ -619,11 +619,11 @@ int main()
     else if(IS_ITYPE(InstructionList[line]->mnemonic)){
       /*
       I-TYPE INSTRUCTION
-      |000000|XXXXX|XXXXX|XXXXX|00000|XXXXXX|
-      |funct |rs   |rt   |immedaite         |
-      |31:26 |25:21|20:16|15:0              |
+      |000000|XXXXX|XXXXX|XXXXXXXXXXXXXXXX|
+      |funct |rs   |rt   |immediate       |
+      |31:26 |25:21|20:16|15:0            |
       */
-     
+      continue;
     }
 		char *machine_code_string = GET_BINARY(machine_code);
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
