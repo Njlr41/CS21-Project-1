@@ -1,28 +1,4 @@
-24
+3
 .text
-main: syscall
-GCD($a0,$a1)
-li $a0,500
-la $a1,123($a2)
-move $s0,$v0
-move $a0,$s0
-j log
-cont: addi $t0,$0,1
-bne $v0,32,check
-check: slt $t0,$t0,$v0
-move $a0,$t0
+li $a0,2147483647
 syscall
-and $a0,$s0,15
-add $a0,$t0,$a0
-syscall
-syscall
-log: beq $a0,$0,cont
-addi $v0,$v0,1
-j log
-.data
-allocate_str(msg1,"Enter a string: ")
-allocate_str(msg2,"You entered: ")
-allocate_bytes(name,10)
-award: .asciiz "AWARD"
-eme: .word 123
-luh: .word 31241

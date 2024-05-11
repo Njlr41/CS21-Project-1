@@ -50,6 +50,7 @@ int main()
   char *file_name = "sample_input.txt"; // file name
   FILE *fp = fopen(file_name, "r");     // read file
   FILE *output = fopen("output.txt", "w"); // write file
+  FILE *machinecode = fopen("machinecode.txt", "w"); // write file
 
   if(fp == NULL){
     printf("Error");
@@ -272,7 +273,6 @@ int main()
       else if(strcmp(mnemonic, "li") == 0){
         char first_input[100] = {};
         char second_input[100] = {};
-        char third_input[100] = {};
         int j = 0, i = 0;
         j = 0;
         i++;
@@ -282,12 +282,32 @@ int main()
 
         j = 0;
         i++;
-        for(; symbol[i] != ')'; i++, j++){
+        for(; symbol[i] != '\n'; i++, j++){
         second_input[j] = symbol[i];
         }
+        /*
+        Decomposes to:
+        lui $at,0x1234
+        ori $(target),$at,0x5678
+        */ 
 
-        temp_instruction->rs = REG_NUMBER(first_input);
-        temp_instruction->immediate = atoi(second_input);
+        int upper = atoi(second_input); int lower = atoi(second_input);
+        upper = upper >> 16;
+        lower = lower & 65535;
+
+        strcpy(temp_instruction->mnemonic, "lui");
+        temp_instruction->rs = REG_NUMBER("$at");
+        temp_instruction->immediate = upper;
+        
+        InstructionList[LINE_NUMBER - 1] = CREATE_INSTRUCTION(temp_instruction);
+        LINE_NUMBER++;
+        free(temp_instruction);
+        temp_instruction = RESET_TEMP();
+
+        strcpy(temp_instruction->mnemonic, "ori");
+        temp_instruction->rs = REG_NUMBER("$at");
+        temp_instruction->rt = REG_NUMBER(first_input);
+        temp_instruction->immediate = lower;
       }
       
       else if(strcmp(mnemonic, "la") == 0){
@@ -566,6 +586,16 @@ int main()
   PRINT_SYMBOL_TABLE(head, output);
   PRINT_DATA_SEGMENT(head);
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
+
+  // SECOND PASS
+  int machine_code;
+  for (int line = 1; line < (sizeof(InstructionList) / sizeof(InstructionList[0])); line++){
+    printf("%s\n", InstructionList[line]->mnemonic);
+    if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
+      machine_code = 34775072;
+    }
+    fprintf(machinecode, "%s\n", machine_code);
+  }
   return 0;
 }
 
@@ -708,7 +738,7 @@ int IS_RTYPE(char mnem[]){
 
 int IS_ITYPE(char mnem[]){
   // check if mnemonic of instruction is I-Type
-  char lst[7][6] = {"addi","addiu","lui","lw","sw","beq","bne"};
+  char lst[8][6] = {"addi","addiu","lui","lw","ori","sw","beq","bne"};
   for(int i=0; i<7; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
