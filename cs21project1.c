@@ -571,7 +571,7 @@ int main()
         InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
 
       printf("\nINST_COUNTER: %d",INST_COUNTER);
-      printf("%s",InstructionList[INST_COUNTER-1]->mnemonic);
+      if(INST_COUNTER != 0) printf("%s",InstructionList[INST_COUNTER-1]->mnemonic);
 
       // (2)
       strcpy(mnemonic,"\0");
