@@ -596,7 +596,11 @@ int main()
 
   // SECOND PASS
   int machine_code;
+<<<<<<< Updated upstream
   for (int line = 0; line < INST_COUNTER; line++){
+=======
+  for (int line = 1; line < (sizeof(InstructionList) / sizeof(InstructionList[0]) - 1); line++){
+>>>>>>> Stashed changes
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
       /*
       R-TYPE INSTRUCTION
@@ -616,8 +620,19 @@ int main()
 			machine_code = machine_code | (InstructionList[line]->rs << 21);
 		}
 
+    else if(IS_ITYPE(InstructionList[line]->mnemonic)){
+      /*
+      I-TYPE INSTRUCTION
+      |000000|XXXXX|XXXXX|XXXXX|00000|XXXXXX|
+      |funct |rs   |rt   |immedaite         |
+      |31:26 |25:21|20:16|15:0              |
+      */
+     
+    }
 		char *machine_code_string = GET_BINARY(machine_code);
+    fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+    
   }
   return 0;
 }
