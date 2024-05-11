@@ -40,7 +40,7 @@ void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER);
 void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
 void PRINT_DATA_SEGMENT(Symbol *head);
 void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
-int IS_PSUEDO(char mnem[]);
+int IS_PSEUDO(char mnem[]);
 int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
