@@ -74,7 +74,8 @@ int main()
 
   // Initialize TEMP_INSTRUCTION and LIST OF INSTRUCTIONS
   Instruction *temp_instruction = RESET_TEMP();
-  Instruction *InstructionList[N_LINES + 1];
+  Instruction *InstructionList[1000];
+  int INST_COUNTER = 0;
 
   printf("[Line 1]");
   fscanf(fp, "%s%c", &symbol, &c);
@@ -243,8 +244,8 @@ int main()
         */
         
         symbol[strlen(symbol)-1] = '\0';
-        if(SYMBOL_EXISTS(symbol, head)) UPDATE_ADDRESS(symbol, (LINE_NUMBER - 1), 0, head);
-        else APPEND_SYMBOL(symbol, BASE_TEXT + (LINE_NUMBER - 1)*4, &head);
+        if(SYMBOL_EXISTS(symbol, head)) UPDATE_ADDRESS(symbol, INST_COUNTER, 0, head);
+        else APPEND_SYMBOL(symbol, BASE_TEXT + (INST_COUNTER*4), &head);
 
         printf("=> label");
       }
@@ -273,13 +274,13 @@ int main()
 
       // PSEUDO INSTRUCTIONS
       else if(strcmp(mnemonic, "li") == 0){
+        printf("=> operand");
         char first_input[100] = {};
         char second_input[100] = {};
         int j = 0, i = 0;
         j = 0;
-        i++;
         for(; symbol[i] != ','; i++, j++){
-        first_input[j] = symbol[i];
+          first_input[j] = symbol[i];
         }
 
         j = 0;
@@ -300,9 +301,8 @@ int main()
         strcpy(temp_instruction->mnemonic, "lui");
         temp_instruction->rs = REG_NUMBER("$at");
         temp_instruction->immediate = upper;
-        
-        InstructionList[LINE_NUMBER - 1] = CREATE_INSTRUCTION(temp_instruction);
-        LINE_NUMBER++;
+        InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+
         free(temp_instruction);
         temp_instruction = RESET_TEMP();
 
@@ -313,6 +313,7 @@ int main()
       }
       
       else if(strcmp(mnemonic, "la") == 0){
+        printf("=> operand");
         char first_input[100] = {};
         char second_input[100] = {};
         char third_input[100] = {};
@@ -425,6 +426,7 @@ int main()
           printf("ERROR IN MACRO READ");
         }
       }
+      
       else {
         /*
         OPERAND/S of the Instruction
@@ -565,7 +567,11 @@ int main()
       */
 
       // (1)
-      InstructionList[LINE_NUMBER - 1] = CREATE_INSTRUCTION(temp_instruction);
+      if(strcmp(temp_instruction->mnemonic,"\0")!=0)
+        InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+
+      printf("\nINST_COUNTER: %d",INST_COUNTER);
+      printf("%s",InstructionList[INST_COUNTER-1]->mnemonic);
 
       // (2)
       strcpy(mnemonic,"\0");
@@ -583,15 +589,14 @@ int main()
 
     }
   }
-
-  PRINT_INSTRUCTIONS(InstructionList, N_LINES);
+  PRINT_INSTRUCTIONS(InstructionList, INST_COUNTER);
   PRINT_SYMBOL_TABLE(head, output);
   PRINT_DATA_SEGMENT(head);
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
 
   // SECOND PASS
   int machine_code;
-  for (int line = 1; line < (sizeof(InstructionList) / sizeof(InstructionList[0])); line++){
+  for (int line = 0; line < INST_COUNTER; line++){
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
       /*
       R-TYPE INSTRUCTION
@@ -599,6 +604,7 @@ int main()
       |opcode|rs   |rt   |rd   |shamt|funct |
       |31:26 |25:21|20:16|15:11|10:6 |5:0   |
       */
+
     	if (strcmp(InstructionList[line]->mnemonic, "add") == 0) machine_code = 32;
 			else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0) machine_code = 34;
 			else if (strcmp(InstructionList[line]->mnemonic, "and") == 0) machine_code = 36;
@@ -650,9 +656,9 @@ void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
   }
 }
 
-void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES){
+void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N){
   printf("\n\nScanned the following instructions...\n");
-  for(int i = 0; i < N_LINES; i++)
+  for(int i = 0; i < N; i++)
   {
     Instruction *inst = InstructionList[i];
     if(strcmp(inst->mnemonic,"\0")){
@@ -660,7 +666,7 @@ void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES){
       if(inst->rd != -1) printf("[rd: %d] ", inst->rd);
       if(inst->rt != -1) printf("[rt: %d] ", inst->rt);
       if(inst->rs != -1) printf("[rs: %d] ", inst->rs);
-      if((IS_ITYPE(inst->mnemonic) && inst->mnemonic[0]!='b') || IS_PSUEDO(inst->mnemonic)) printf("[imm: %d] ", inst->immediate);
+      if((IS_ITYPE(inst->mnemonic) && inst->mnemonic[0]!='b') || IS_PSEUDO(inst->mnemonic)) printf("[imm: %d] ", inst->immediate);
       if(strcmp(inst->target,"\0")!=0) printf("[target: %s] ", inst->target);
       printf("\n");
     }
@@ -737,10 +743,10 @@ int NEEDS_TARGET(char mnem[]){
   return 0;
 }
 
-int IS_PSUEDO(char mnem[]){
+int IS_PSEUDO(char mnem[]){
 // check if mnemonic of instruction is pseudoinstruction
   char lst[7][5] = {"li", "la"};
-  for(int i=0; i<7; i++)
+  for(int i=0; i<2; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
 }
