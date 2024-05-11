@@ -41,6 +41,7 @@ void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
 void PRINT_DATA_SEGMENT(Symbol *head);
 void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
 int IS_PSEUDO(char mnem[]);
+int IS_PSEUDO(char mnem[]);
 int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
@@ -294,7 +295,7 @@ int main()
         ori $(target),$at,0x5678
         */ 
 
-        int upper = atoi(second_input); int lower = atoi(second_input);
+        int upper = atoi(second_input), lower = atoi(second_input);
         upper = upper >> 16;
         lower = lower & 65535;
 
@@ -488,12 +489,12 @@ int main()
 
               strcpy(operand,"\0"); // reset reg_name
 
-              for(i=i+1, j=0; symbol[i]!='\0' || symbol[i]!='('; i++, j++)
+              for(i=i+1, j=0; symbol[i]!='\0' && symbol[i]!='('; i++, j++)
                 operand[j] = symbol[i];
               temp_instruction->immediate = atoi(operand);
 
               // lw, sw
-              if(mnemonic[1] == 'w'){ // srore to rs
+              if(mnemonic[1] == 'w'){ // store to rs
                 strcpy(operand,"\0");
                 for(i=i+1, j=0; symbol[i]!=')'; i++, j++)
                   operand[j] = symbol[i];
@@ -571,7 +572,7 @@ int main()
         InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
 
       printf("\nINST_COUNTER: %d",INST_COUNTER);
-      if(INST_COUNTER != 0) printf("%s",InstructionList[INST_COUNTER-1]->mnemonic);
+      if(INST_COUNTER != 0) if(INST_COUNTER!=0) printf("%s",InstructionList[INST_COUNTER-1]->mnemonic);
 
       // (2)
       strcpy(mnemonic,"\0");
@@ -596,14 +597,15 @@ int main()
 
   // SECOND PASS
   int machine_code;
+  /*
   for (int line = 0; line < INST_COUNTER; line++){
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
-      /*
+      
       R-TYPE INSTRUCTION
       |000000|XXXXX|XXXXX|XXXXX|00000|XXXXXX|
       |opcode|rs   |rt   |rd   |shamt|funct |
       |31:26 |25:21|20:16|15:11|10:6 |5:0   |
-      */
+      
 
     	if (strcmp(InstructionList[line]->mnemonic, "add") == 0) machine_code = 32;
 			else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0) machine_code = 34;
@@ -630,6 +632,7 @@ int main()
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
     
   }
+  */
   return 0;
 }
 
@@ -790,6 +793,7 @@ void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head){
   // create new symbol for label
   Symbol *new_symbol = (Symbol *)malloc(sizeof(Symbol));
   strcpy(new_symbol->name, symbol_name);
+  strcpy(new_symbol->str_value, "\0");
   new_symbol->next = NULL;
   new_symbol->address = address_val;
 
