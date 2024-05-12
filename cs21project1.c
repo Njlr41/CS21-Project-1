@@ -368,6 +368,16 @@ int main()
 
           temp_instruction->rs = REG_NUMBER(first_input);
           temp_instruction->rt = REG_NUMBER(second_input);
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+
+          strcpy(temp_instruction->mnemonic, "macro");
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+          
+          strcpy(temp_instruction->mnemonic, "macro");
         }
         // One Parameters
         else if(strcmp(macro_type, "print_str") == 0){
@@ -378,6 +388,11 @@ int main()
           }
 
           strcpy(temp_instruction->target, first_input);
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+
+          strcpy(temp_instruction->mnemonic, "macro");
         }
         // Two Parameters
         else if(strcmp(macro_type, "read_str") == 0){
@@ -395,6 +410,16 @@ int main()
 
           strcpy(temp_instruction->target, first_input);
           temp_instruction->immediate = atoi(second_input);
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+
+          strcpy(temp_instruction->mnemonic, "macro");
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+          
+          strcpy(temp_instruction->mnemonic, "macro");
         }
         // One Parameter
         else if(strcmp(macro_type, "print_integer") == 0){
@@ -405,6 +430,11 @@ int main()
           }
 
           temp_instruction->rs = REG_NUMBER(first_input);
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+
+          strcpy(temp_instruction->mnemonic, "macro");
         }
         // One Parameter
         else if(strcmp(macro_type, "read_integer") == 0){
@@ -416,6 +446,11 @@ int main()
 
           strcpy(temp_instruction->mnemonic, "read_integer");
           temp_instruction->immediate = atoi(first_input);
+          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+          free(temp_instruction);
+          temp_instruction = RESET_TEMP();
+
+          strcpy(temp_instruction->mnemonic, "macro");
         }
         // No Parameter
         else if(strcmp(macro_type, "exit") == 0){
@@ -601,6 +636,7 @@ int main()
   // SECOND PASS
   int machine_code;
   for (int line = 0; line < INST_COUNTER; line++){
+    if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
       /*
       R-TYPE INSTRUCTION
