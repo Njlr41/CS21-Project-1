@@ -688,7 +688,6 @@ int main()
         syscall
         */
         //la
-        // Find InstructionList[line]->target) in symboltable NOT DONE
         int address = GET_SYMBOL_ADDRESS(InstructionList[line]->target, output);
         int upper = address; int lower = address;
         upper = upper >> 16;
