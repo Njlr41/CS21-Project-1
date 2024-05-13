@@ -2,9 +2,11 @@
 .text
 GCD($t0,$t1)
 add $t0,$t0,$t0
-print_str(label)
+print_str(msg1)
 add $t0,$t0,$t0
 read_str(label,10)
 add $t0,$t0,$t0
 print_integer($t5)
 add $t0,$t0,$t0
+.data
+allocate_str(msg1,"Enter a string: ")

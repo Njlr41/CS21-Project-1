@@ -291,8 +291,8 @@ int main()
         }
         /*
         Decomposes to:
-        lui $at,0x1234
-        ori $(target),$at,0x5678
+        lui $at,0x00001234
+        ori $(target),$at,0x00005678
         */ 
 
         int upper = atoi(second_input), lower = atoi(second_input);
@@ -627,6 +627,7 @@ int main()
   int machine_code;
   for (int line = 0; line < INST_COUNTER; line++){
     if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
+    char *machine_code_string;
 		if (IS_RTYPE(InstructionList[line]->mnemonic)){
       /*
       R-TYPE INSTRUCTION
@@ -673,8 +674,48 @@ int main()
 
     else if(IS_MACRO(InstructionList[line]->mnemonic)){
       if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0) machine_code = 201342976;
+      else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
+        /*
+        Decomposes into: 
+        la $a0, %label               (label address: 0x12345678)
+          | lui $at,0x00001234       (001111 00000 00001 XXXXXXXXXXXXXXXX)
+          | ori $a0,$at,0x00005678   (001101 00001 00100 XXXXXXXXXXXXXXXX)
+        li $v0, 4
+          | lui $at,0x00000000       (001111 00000 00001 0000000000000000)
+          | ori $v0,$at,0x00000004   (001101 00001 00010 0000000000000100)
+        syscall
+        */
+        //la
+        // Find InstructionList[line]->target) in symboltable NOT DONE
+        int address = 0;
+        int upper = address; int lower = address;
+        upper = upper >> 16;
+        lower = lower & 65535;
+        
+        machine_code = (15361 << 16) + upper;
+        machine_code_string = GET_BINARY(machine_code);
+        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+        fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+
+        machine_code = (13348 << 16) + lower;
+        machine_code_string = GET_BINARY(machine_code);
+        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+        fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+        //li
+        machine_code = 1006698496;
+        machine_code_string = GET_BINARY(machine_code);
+        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+        fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+
+        machine_code = 874643460;
+        machine_code_string = GET_BINARY(machine_code);
+        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+        fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+        //syscall
+        machine_code = 0;
+      }
     }
-		char *machine_code_string = GET_BINARY(machine_code);
+		machine_code_string = GET_BINARY(machine_code);
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
   }

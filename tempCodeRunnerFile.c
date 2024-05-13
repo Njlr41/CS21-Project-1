@@ -1,1 +1,1 @@
-INST_COUNTER
+SymbolTable
