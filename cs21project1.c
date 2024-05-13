@@ -41,6 +41,7 @@ void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
 void PRINT_DATA_SEGMENT(Symbol *head);
 void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
 int IS_PSEUDO(char mnem[]);
+int IS_MACRO(char mnem[]);
 int IS_RTYPE(char mnem[]);
 int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
@@ -335,7 +336,12 @@ int main()
         for(; symbol[i] != ')'; i++, j++){
           third_input[j] = symbol[i];
         }
+        // NOT DONE
+        /*
+        Decomposes into:
 
+
+        */
         temp_instruction->rt = REG_NUMBER(first_input);
         temp_instruction->immediate = atoi(second_input);
         temp_instruction->rs = REG_NUMBER(third_input);
@@ -368,16 +374,6 @@ int main()
 
           temp_instruction->rs = REG_NUMBER(first_input);
           temp_instruction->rt = REG_NUMBER(second_input);
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-
-          strcpy(temp_instruction->mnemonic, "macro");
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-          
-          strcpy(temp_instruction->mnemonic, "macro");
         }
         // One Parameters
         else if(strcmp(macro_type, "print_str") == 0){
@@ -388,11 +384,12 @@ int main()
           }
 
           strcpy(temp_instruction->target, first_input);
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-
-          strcpy(temp_instruction->mnemonic, "macro");
+          for(int m = 0; m < 4; m++){
+            InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+            free(temp_instruction);  
+            temp_instruction = RESET_TEMP();
+            strcpy(temp_instruction->mnemonic, "macro");
+          }
         }
         // Two Parameters
         else if(strcmp(macro_type, "read_str") == 0){
@@ -410,16 +407,12 @@ int main()
 
           strcpy(temp_instruction->target, first_input);
           temp_instruction->immediate = atoi(second_input);
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-
-          strcpy(temp_instruction->mnemonic, "macro");
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-          
-          strcpy(temp_instruction->mnemonic, "macro");
+          for(int m = 0; m < 6; m++){
+            InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+            free(temp_instruction);  
+            temp_instruction = RESET_TEMP();
+            strcpy(temp_instruction->mnemonic, "macro");
+          }
         }
         // One Parameter
         else if(strcmp(macro_type, "print_integer") == 0){
@@ -430,11 +423,12 @@ int main()
           }
 
           temp_instruction->rs = REG_NUMBER(first_input);
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-
-          strcpy(temp_instruction->mnemonic, "macro");
+          for(int m = 0; m < 4; m++){
+            InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+            free(temp_instruction);  
+            temp_instruction = RESET_TEMP();
+            strcpy(temp_instruction->mnemonic, "macro");
+          }
         }
         // One Parameter
         else if(strcmp(macro_type, "read_integer") == 0){
@@ -446,11 +440,7 @@ int main()
 
           strcpy(temp_instruction->mnemonic, "read_integer");
           temp_instruction->immediate = atoi(first_input);
-          InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
-          free(temp_instruction);
-          temp_instruction = RESET_TEMP();
-
-          strcpy(temp_instruction->mnemonic, "macro");
+          //NOT DONE
         }
         // No Parameter
         else if(strcmp(macro_type, "exit") == 0){
@@ -680,6 +670,10 @@ int main()
       if (strcmp(InstructionList[line]->mnemonic, "j") == 0);
       if (strcmp(InstructionList[line]->mnemonic, "jal") == 0);
     }
+
+    else if(IS_MACRO(InstructionList[line]->mnemonic)){
+      if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0) machine_code = 201342976;
+    }
 		char *machine_code_string = GET_BINARY(machine_code);
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
@@ -816,6 +810,13 @@ int IS_PSEUDO(char mnem[]){
   return 0;
 }
 
+int IS_MACRO(char mnem[]){
+  // check if menmonic of instruction is a macro
+  char lst[6][15] = {"GCD","print_str","read_str","print_integer","read_integer","exit"};
+  for(int i = 0; i < 6; i++)
+    if(strcmp(lst[i], mnem) == 0) return 1;
+  return 0; 
+}
 int IS_RTYPE(char mnem[]){
   // check if mnemonic of instruction is R-Type
   char lst[7][5] = {"add","sub","and","or","slt","move","jr"};
@@ -827,7 +828,7 @@ int IS_RTYPE(char mnem[]){
 int IS_ITYPE(char mnem[]){
   // check if mnemonic of instruction is I-Type
   char lst[8][6] = {"addi","addiu","lui","lw","ori","sw","beq","bne"};
-  for(int i=0; i<7; i++)
+  for(int i=0; i<8; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
 }
