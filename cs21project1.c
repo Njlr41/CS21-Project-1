@@ -47,12 +47,13 @@ int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
 Symbol *GET_TAIL(Symbol *head);
 char *GET_BINARY(int number);
+int HEX_TO_DECIMAL(char* hex);
+int GET_SYMBOL_ADDRESS(char label[], FILE* symbol_table);
 
 int main()
 {
-  char *file_name = "sample_input.txt"; // file name
-  FILE *fp = fopen(file_name, "r");     // read file
-  FILE *output = fopen("output.txt", "w"); // write file
+  FILE *fp = fopen("sample_input.txt", "r");     // read file
+  FILE *output = fopen("output.txt", "w+"); // write file
   FILE *machinecode = fopen("machinecode.txt", "w"); // write file
 
   if(fp == NULL){
@@ -620,6 +621,7 @@ int main()
   }
   PRINT_INSTRUCTIONS(InstructionList, INST_COUNTER);
   PRINT_SYMBOL_TABLE(head, output);
+  rewind(output);
   PRINT_DATA_SEGMENT(head);
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
 
@@ -687,7 +689,7 @@ int main()
         */
         //la
         // Find InstructionList[line]->target) in symboltable NOT DONE
-        int address = 0;
+        int address = GET_SYMBOL_ADDRESS(InstructionList[line]->target, output);
         int upper = address; int lower = address;
         upper = upper >> 16;
         lower = lower & 65535;
@@ -778,7 +780,7 @@ void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output){
   Symbol *temp = head;
   while(temp){
     printf("[%-5s 0x%08X]", temp->name, temp->address);
-    fprintf(output, "[%-5s 0x%08X]", temp->name, temp->address); // write output to output.txt
+    fprintf(output, "%s\t0x%08X", temp->name, temp->address); // write output to output.txt
     if(temp->next) printf("\n");
     if(temp->next) fprintf(output,"\n"); // write output to output.txt
     temp = temp->next;
@@ -880,6 +882,28 @@ int IS_JTYPE(char mnem[]){
   for(int i=0; i<2; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
+}
+
+int GET_SYMBOL_ADDRESS(char label[], FILE* symbol_table){
+  // NOT DONE ADD CATCH IF EOF
+  char name[100]; char hex[100];
+  while(1){
+    fscanf(symbol_table, "%s\t%s", &name, &hex);
+    if(strcmp(label, name) == 0){
+      return HEX_TO_DECIMAL(hex);
+    }
+  }
+}
+
+int HEX_TO_DECIMAL(char* hex){
+  int integer; int exp = 0; int decimal = 0;
+  sscanf(hex, "0x%08d", &integer);
+  for(int count = 0; count < 8; count++){
+    decimal = decimal + (integer % 10)*(pow(16,exp++)); 
+    integer = integer/10;
+  }
+  printf("%d", decimal);
+  return decimal;
 }
 
 void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head){
