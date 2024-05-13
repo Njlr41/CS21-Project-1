@@ -114,7 +114,7 @@ int main()
         */
        
         symbol[strlen(symbol)-1] = '\0';
-        if(SYMBOL_EXISTS(symbol, head))
+        if(SYMBOL_EXISTS(symbol, head) != -1)
           UPDATE_ADDRESS(symbol, BYTE_COUNTER, 1, head);
         else
           APPEND_SYMBOL(symbol, BASE_DATA + BYTE_COUNTER, &head);
@@ -246,7 +246,7 @@ int main()
         */
         
         symbol[strlen(symbol)-1] = '\0';
-        if(SYMBOL_EXISTS(symbol, head)) UPDATE_ADDRESS(symbol, INST_COUNTER, 0, head);
+        if(SYMBOL_EXISTS(symbol, head) != -1) UPDATE_ADDRESS(symbol, INST_COUNTER, 0, head);
         else APPEND_SYMBOL(symbol, BASE_TEXT + (INST_COUNTER*4), &head);
 
         printf("=> label");
@@ -543,7 +543,7 @@ int main()
             temp_instruction->rt = REG_NUMBER(operand);
             strcpy(temp_instruction->target,symbol+(i+1));
 
-            if(!SYMBOL_EXISTS(symbol, head)) APPEND_SYMBOL(symbol, 0, &head);
+            if(SYMBOL_EXISTS(symbol, head) == -1) APPEND_SYMBOL(symbol, 0, &head);
             strcpy(temp_instruction->target, symbol+(i+1));
             printf("%s", temp_instruction->target);
           } 
@@ -567,7 +567,7 @@ int main()
         }
 
         else{ // j-type
-          if(!SYMBOL_EXISTS(symbol, head))
+          if(SYMBOL_EXISTS(symbol, head) == -1)
             APPEND_SYMBOL(symbol, 0, &head);
           strcpy(temp_instruction->target, symbol);
           printf("%s",temp_instruction->target);
@@ -659,8 +659,14 @@ int main()
     	if (strcmp(InstructionList[line]->mnemonic, "addi") == 0) machine_code = InstructionList[line]->immediate + (8 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0) machine_code = InstructionList[line]->immediate + (9 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0) machine_code = InstructionList[line]->immediate + (15 << 26);
-    	else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0) machine_code = InstructionList[line]->immediate + (35 << 26);
-    	else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0) machine_code = InstructionList[line]->immediate + (13 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
+        if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (35 << 26);
+        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (35 << 26);
+      } 
+    	else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
+        if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (13 << 26);
+        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (13 << 26);
+      }
     	else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0) machine_code = InstructionList[line]->immediate + (45 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0) machine_code = 0; // Not Done
     	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0) machine_code = 0; // Not Done
@@ -688,7 +694,7 @@ int main()
         syscall
         */
         //la
-        int address = GET_SYMBOL_ADDRESS(InstructionList[line]->target, output);
+        int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
         int upper = address; int lower = address;
         upper = upper >> 16;
         lower = lower & 65535;
@@ -726,18 +732,19 @@ int main()
 void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
   Symbol *data_label = SymbolTable;
   while(data_label->next) data_label = data_label->next;
-  printf("name: %s, str_value: %s, int_value: %d", data_label->name, data_label->str_value, data_label->int_value);
-  printf("\noffset: %d\n", data_label->address-BASE_DATA);
-  if(strcmp(data_label->str_value,"\0")!=0){ // string
+  if(strcmp(data_label->str_value,"\0")!=0) // string
     strcpy(MemoryFile + (data_label->address - BASE_DATA), data_label->str_value);
-    printf("\nMemoryFile[%d] = %s\n", data_label->address - BASE_DATA, data_label->str_value);
-  }
   else{ // integer
-    for(int i=0; i<4; i++){
+    for(int i=0; i<4; i++)
       MemoryFile[data_label->address - BASE_DATA + i] = data_label->int_value >> (32-(((i+1))*8));
-      printf("MemoryFile[%d] = %d >> %d", data_label->address - BASE_DATA+i, data_label->int_value, (32-(((i+1))*8)));
-    }
   }
+}
+
+int LOAD_INT(char MemoryFile[], int address){
+  int value = 0;
+  for(int start = address - BASE_DATA, i=0; i<4; start++, i++)
+    value += ((int) MemoryFile[start] << 8*(3-i));
+  return value;
 }
 
 void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
@@ -859,6 +866,7 @@ int IS_MACRO(char mnem[]){
     if(strcmp(lst[i], mnem) == 0) return 1;
   return 0; 
 }
+
 int IS_RTYPE(char mnem[]){
   // check if mnemonic of instruction is R-Type
   char lst[7][5] = {"add","sub","and","or","slt","move","jr"};
@@ -979,10 +987,10 @@ int SYMBOL_EXISTS(char symbol_name[], Symbol *head){
   // check if symbol is already in the symbol table
   Symbol *temp = head;
   while(temp){
-    if(strcmp(symbol_name,temp->name)==0) return 1;
+    if(strcmp(symbol_name,temp->name)==0) return temp->address;
     temp = temp->next;
   }
-  return 0;
+  return -1;
 }
 
 char *GET_BINARY(int number){
