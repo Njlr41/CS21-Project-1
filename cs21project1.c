@@ -693,13 +693,8 @@ int main()
           | ori $v0,$at,0x00000004   (001101 00001 00010 0000000000000100)
         syscall
         */
-<<<<<<< Updated upstream
         //la
         int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
-=======
-        //la $a0,%label
-        int address = GET_SYMBOL_ADDRESS(InstructionList[line]->target, output);
->>>>>>> Stashed changes
         int upper = address; int lower = address;
         upper = upper >> 16;
         lower = lower & 65535;
