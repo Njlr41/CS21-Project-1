@@ -676,8 +676,8 @@ int main()
     }
 
     else if(IS_JTYPE(InstructionList[line]->mnemonic)){
-      if (strcmp(InstructionList[line]->mnemonic, "j") == 0);
-      if (strcmp(InstructionList[line]->mnemonic, "jal") == 0);
+      if (strcmp(InstructionList[line]->mnemonic, "j") == 0); // Not Done
+      if (strcmp(InstructionList[line]->mnemonic, "jal") == 0); // Not Done
     }
 
     else if(IS_MACRO(InstructionList[line]->mnemonic)){
@@ -990,17 +990,6 @@ int IS_JTYPE(char mnem[]){
   for(int i=0; i<2; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
-}
-
-int GET_SYMBOL_ADDRESS(char label[], FILE* symbol_table){
-  // NOT DONE ADD CATCH IF EOF
-  char name[100]; char hex[100];
-  while(1){
-    fscanf(symbol_table, "%s\t%s", &name, &hex);
-    if(strcmp(label, name) == 0){
-      return HEX_TO_DECIMAL(hex);
-    }
-  }
 }
 
 int HEX_TO_DECIMAL(char* hex){
