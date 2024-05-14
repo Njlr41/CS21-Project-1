@@ -648,8 +648,10 @@ int main()
     }
 
     else if(IS_JTYPE(InstructionList[line]->mnemonic)){
-      if (strcmp(InstructionList[line]->mnemonic, "j") == 0); // Not Done
-      if (strcmp(InstructionList[line]->mnemonic, "jal") == 0); // Not Done
+      if (strcmp(InstructionList[line]->mnemonic, "j") == 0);
+        machine_code = (0x2 << 26) || ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
+      if (strcmp(InstructionList[line]->mnemonic, "jal") == 0);
+        machine_code = (0x3 << 26) || ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
     }
 
     else if(IS_MACRO(InstructionList[line]->mnemonic)){
@@ -818,6 +820,10 @@ int LOAD_INT(char MemoryFile[], int address){
   for(int start = address - BASE_DATA, i=0; i<4; start++, i++)
     value += ((int) MemoryFile[start] << 8*(3-i));
   return value;
+}
+
+int LOAD_STRING(char MemoryFile[], int address){
+  return MemoryFile + (BASE_DATA-address);
 }
 
 void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
