@@ -682,12 +682,12 @@ int main()
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
         //li $v0,4
-        machine_code = 1006698496;
+        machine_code = 00111100000000010000000000000000;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
-        machine_code = 874643460;
+        machine_code = 00110100001000100000000000000100;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
@@ -712,37 +712,37 @@ int main()
         int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
         int upper = address, lower = address;
         upper = upper >> 16;
-        lower = lower & 65535;
+        lower = lower & 0xFFFF;
 
-        machine_code = (15361 << 16) + upper;
+        machine_code = (0b0011110000000001 << 16) + upper;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
-        machine_code = (13348 << 16) + lower;
+        machine_code = (0b0011010000100100 << 16) + lower;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
         //li $a1,0x12345678
         upper = InstructionList[line]->immediate >> 16;
-        lower = InstructionList[line]->immediate & 65535;
+        lower = InstructionList[line]->immediate & 0xFFFF;
 
-        machine_code = (15361 << 16) + upper;
+        machine_code = (0b0011110000000001 << 16) + upper;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
-        machine_code = (13349 << 16) + lower;
+        machine_code = (0b0011010000100101 << 16) + lower;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
         //li $v0,8
-        machine_code = 1006698496;
+        machine_code = 0b00111100000000010000000000000000;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
-        machine_code = 874643464;
+        machine_code = 0b00110100001000100000000000001000;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
@@ -776,12 +776,12 @@ int main()
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
         //li $v0,1
-        machine_code = 1006698496;
+        machine_code = 0b00111100000000010000000000000000;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
-        machine_code = 874643457;
+        machine_code = 0b00110100001000100000000000000001;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
