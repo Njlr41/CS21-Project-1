@@ -48,7 +48,6 @@ int IS_JTYPE(char mnem[]);
 Symbol *GET_TAIL(Symbol *head);
 char *GET_BINARY(int number);
 int HEX_TO_DECIMAL(char* hex);
-int GET_SYMBOL_ADDRESS(char label[], FILE* symbol_table);
 
 int main()
 {
@@ -682,12 +681,12 @@ int main()
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
         //li $v0,4
-        machine_code = 00111100000000010000000000000000;
+        machine_code = 0b00111100000000010000000000000000;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
-        machine_code = 00110100001000100000000000000100;
+        machine_code = 0b00110100001000100000000000000100;
         machine_code_string = GET_BINARY(machine_code);
         fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%0*s\n", 32, machine_code_string);
@@ -761,7 +760,7 @@ int main()
         syscall
         */
         //la $a0,%label
-        int address = GET_SYMBOL_ADDRESS(InstructionList[line]->target, output);
+        int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
         int upper = address; int lower = address;
         upper = upper >> 16;
         lower = lower & 65535;
