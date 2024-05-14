@@ -349,42 +349,36 @@ int main()
       }
 
       else if(symbol[strlen(symbol)-1] == ')' && strcmp(mnemonic, "\0") == 0){
+        /*
+        MACRO Definition
+        (1) Get MACRO_TYPE and store it to mnemonic
+        (2) For each macro involving N instructions:
+        -- Scan symbol for the operands
+        -- Create an INSTRUCTION for the macro itself
+        -- Fill up the remaining N-1 spaces by pseudo-macros 
+        */
         char macro_type[20] = {};
         char first_input[100] = {};
         char second_input[100] = {};
         char third_input[100] = {};
         int i = 0, j = 0;
-        for(; symbol[i] != '('; i++, j++){
-          macro_type[j] = symbol[i];
-        }
 
+        for(int j=0; symbol[i] != '('; i++, j++) macro_type[j] = symbol[i];
         strcpy(temp_instruction->mnemonic, macro_type);
+
         // Two Parameters
         if(strcmp(macro_type, "GCD") == 0){
-          j = 0;
-          i++;
-          for(; symbol[i] != ','; i++, j++){
-          first_input[j] = symbol[i];
-          }
-
-          j = 0;
-          i++;
-          for(; symbol[i] != ')'; i++, j++){
-          second_input[j] = symbol[i];
-          }
+          for(i=i+1, j=0; symbol[i] != ','; i++, j++) first_input[j] = symbol[i];
+          for(i=i+1, j=0; symbol[i] != ')'; i++, j++) second_input[j] = symbol[i];
 
           temp_instruction->rs = REG_NUMBER(first_input);
           temp_instruction->rt = REG_NUMBER(second_input);
         }
-        // One Parameters
+        // One Parameter
         else if(strcmp(macro_type, "print_str") == 0){
-          j = 0;
-          i++;
-          for(; symbol[i] != ')'; i++, j++){
-          first_input[j] = symbol[i];
-          }
-
+          for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
           strcpy(temp_instruction->target, first_input);
+
           for(int m = 0; m < 4; m++){
             InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
             free(temp_instruction);  
@@ -394,20 +388,11 @@ int main()
         }
         // Two Parameters
         else if(strcmp(macro_type, "read_str") == 0){
-          j = 0;
-          i++;
-          for(; symbol[i] != ','; i++, j++){
-          first_input[j] = symbol[i];
-          }
-
-          j = 0;
-          i++;
-          for(; symbol[i] != ')'; i++, j++){
-          second_input[j] = symbol[i];
-          }
-
+          for(i=i+1, j=0; symbol[i] != ','; i++, j++) first_input[j] = symbol[i];
+          for(i=i+1, j=0; symbol[i] != ')'; i++, j++) second_input[j] = symbol[i];
           strcpy(temp_instruction->target, first_input);
           temp_instruction->immediate = atoi(second_input);
+
           for(int m = 0; m < 6; m++){
             InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
             free(temp_instruction);  
@@ -417,12 +402,7 @@ int main()
         }
         // One Parameter
         else if(strcmp(macro_type, "print_integer") == 0){
-          j = 0;
-          i++;
-          for(; symbol[i] != ')'; i++, j++){
-          first_input[j] = symbol[i];
-          }
-          
+          for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
           strcpy(temp_instruction->target, first_input);
         
           for(int m = 0; m < 4; m++){
@@ -434,12 +414,7 @@ int main()
         }
         // One Parameter
         else if(strcmp(macro_type, "read_integer") == 0){
-          j = 0;
-          i++;
-          for(; symbol[i] != ')'; i++, j++){
-          first_input[j] = symbol[i];
-          }
-
+          for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
           temp_instruction->immediate = atoi(first_input);
           //NOT DONE
         }
@@ -567,8 +542,7 @@ int main()
         }
 
         else{ // j-type
-          if(SYMBOL_EXISTS(symbol, head) == -1)
-            APPEND_SYMBOL(symbol, 0, &head);
+          if(SYMBOL_EXISTS(symbol, head) == -1) APPEND_SYMBOL(symbol, 0, &head);
           strcpy(temp_instruction->target, symbol);
           printf("%s",temp_instruction->target);
         }
@@ -616,7 +590,6 @@ int main()
       if(to_break==EOF)
         break;
       printf("\n[Line %d]", ++LINE_NUMBER); 
-
     }
   }
   PRINT_INSTRUCTIONS(InstructionList, INST_COUNTER);
@@ -736,8 +709,8 @@ int main()
         syscall
         */
         // la $a0,%label
-        int address = GET_SYMBOL_ADDRESS(InstructionList[line]->target, output);
-        int upper = address; int lower = address;
+        int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
+        int upper = address, lower = address;
         upper = upper >> 16;
         lower = lower & 65535;
 
