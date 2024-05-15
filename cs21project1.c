@@ -27,7 +27,6 @@ struct instruction{
   int immediate;
 };
 
-int NEEDS_TARGET(char mnem[]);
 void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head);
 int SYMBOL_EXISTS(char symbol_name[], Symbol *head);
 void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head);
@@ -49,6 +48,7 @@ int IS_JTYPE(char mnem[]);
 Symbol *GET_TAIL(Symbol *head);
 char *GET_BINARY(int number);
 int HEX_TO_DECIMAL(char* str);
+void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], int INST_COUNTER, Symbol *head);
 
 int main()
 {
@@ -622,7 +622,12 @@ int main()
   rewind(output);
   PRINT_DATA_SEGMENT(head);
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
+  GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
+  
+  return 0;
+}
 
+void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], int INST_COUNTER, Symbol *head){
   // SECOND PASS
   int machine_code;
   for (int line = 0; line < INST_COUNTER; line++){
@@ -867,7 +872,6 @@ int main()
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
     fprintf(machinecode, "%s\n", machine_code_string);
   }
-  return 0;
 }
 
 int HEX_TO_DECIMAL(char *str){
@@ -1001,13 +1005,6 @@ Instruction* RESET_TEMP(){
   return temp;
 }
 
-int NEEDS_TARGET(char mnem[]){
-  // check if mnemonic of instruction associated with operand needs target
-  char lst[6][5] = {"beq", "bne", "lw", "sw", "j", "jal"};
-  for(int i=0; i<6; i++)
-    if(strcmp(lst[i], mnem)==0) return 1;
-  return 0;
-}
 
 int IS_PSEUDO(char mnem[]){
 // check if mnemonic of instruction is pseudoinstruction
