@@ -65,6 +65,9 @@ int main()
   char symbol[100], mnemonic[100], c;
   int N_LINES, LINE_NUMBER = 1, IN_DATA_SEGMENT = 0, BYTE_COUNTER = 0;
 
+  //
+  int RegisterFile[32] = {0};
+
   // Get NUMBER OF LINES
   fscanf(fp, "%d", &N_LINES);
 
@@ -624,6 +627,14 @@ int main()
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
   GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
   
+    
+  for (int line = 0; line < INST_COUNTER; line++){
+    if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
+    if ((InstructionList[line]->mnemonic == "add") == 0){
+
+    }
+  }
+
   return 0;
 }
 
