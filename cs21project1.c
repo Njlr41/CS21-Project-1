@@ -420,10 +420,6 @@ int main()
           temp_instruction->immediate = atoi(first_input);
           //NOT DONE
         }
-        // No Parameter
-        else if(strcmp(macro_type, "exit") == 0){
-          
-        }
         // ERROR CHECK
         else{
           printf("ERROR IN MACRO READ");
@@ -630,11 +626,80 @@ int main()
     
   for (int line = 0; line < INST_COUNTER; line++){
     if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
-    if ((InstructionList[line]->mnemonic == "add") == 0){
-
+    // R-Types
+    if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
+      RegisterFile[InstructionList[line]->rd] = RegisterFile[InstructionList[line]->rs] + RegisterFile[InstructionList[line]->rt];
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "sub") == 0){
+      RegisterFile[InstructionList[line]->rd] = RegisterFile[InstructionList[line]->rs] - RegisterFile[InstructionList[line]->rt];
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "and") == 0){
+      RegisterFile[InstructionList[line]->rd] = RegisterFile[InstructionList[line]->rs] & RegisterFile[InstructionList[line]->rt];
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "or") == 0){
+      RegisterFile[InstructionList[line]->rd] = RegisterFile[InstructionList[line]->rs] | RegisterFile[InstructionList[line]->rt];
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "slt") == 0){
+      RegisterFile[InstructionList[line]->rd] = (RegisterFile[InstructionList[line]->rs] < RegisterFile[InstructionList[line]->rt]) ? 1 : 0;
+    }
+    // I-Types
+    else if (strcmp(InstructionList[line]->mnemonic, "addi") == 0){
+      RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0){
+      RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0){
+      RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + (InstructionList[line]->immediate << 16);
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
+      RegisterFile[InstructionList[line]->rd] = RegisterFile[InstructionList[line]->rs] | RegisterFile[InstructionList[line]->immediate];
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0){
+      
+    }
+    // J-Types
+    else if (strcmp(InstructionList[line]->mnemonic, "j") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "jal") == 0){
+      
+    }
+    // Macro
+    else if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0){
+      // Register Inputs
+      GCD(InstructionList[line]->rs, InstructionList[line]->rt);
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "read_integer") == 0){
+      
+    }
+    else if (strcmp(InstructionList[line]->mnemonic, "exit") == 0){
+      break;
     }
   }
 
+  for (int regnum = 0; regnum < 32; regnum++)
+  {
+    printf("Register Number: %d Value: %d\n", regnum, RegisterFile[regnum]);
+  }
   return 0;
 }
 
@@ -877,6 +942,27 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
         Decomposes into:
 
         */
+      }
+      else if(strcmp(InstructionList[line]->mnemonic, "exit") == 0){
+        /*
+        Decomposes into:
+        li $v0, 10
+          | lui $at,0x00000000       (001111 00000 00001 0000000000000000)
+          | ori $v0,$at,0x0000000A   (001101 00001 00010 0000000000001010)
+        syscall
+        */
+        
+        //li $v0,1
+        machine_code = 0b00111100000000010000000000000000;
+        machine_code_string = GET_BINARY(machine_code);
+        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+        fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+
+        machine_code = 0b00110100001000100000000000001010;
+        machine_code_string = GET_BINARY(machine_code);
+        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+        fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+        machine_code = 0;
       }
     }
 		machine_code_string = GET_BINARY(machine_code);
