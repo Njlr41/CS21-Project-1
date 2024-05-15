@@ -302,8 +302,8 @@ int main()
 
         j = 0;
         i++;
-        for(; symbol[i] != '\n'; i++, j++){
-        second_input[j] = symbol[i];
+        for(; symbol[i] != '\0'; i++, j++){
+          second_input[j] = symbol[i];
         }
         /*
         Decomposes to:
@@ -668,7 +668,7 @@ int main()
       
     }
     else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
-      RegisterFile[InstructionList[line]->rd] = RegisterFile[InstructionList[line]->rs] | RegisterFile[InstructionList[line]->immediate];
+      RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] | InstructionList[line]->immediate;
     }
     else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
       
