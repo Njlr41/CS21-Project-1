@@ -6,6 +6,17 @@
 #include "macro_file.c"
 #define BASE_TEXT 0x00400000 // base address for the text segment
 #define BASE_DATA 0x10000000 // base address for the data segment
+
+typedef struct stack Stack;
+
+struct stack{
+  Stack* sp;
+  Stack* next;
+  Stack* prev;
+  int data;
+  int sp_address;
+};
+
 typedef struct node Symbol;
 
 struct node{
@@ -67,6 +78,7 @@ int main()
 
   //
   int RegisterFile[32] = {0};
+  RegisterFile[29] = 0x7ffffffc; 
 
   // Get NUMBER OF LINES
   fscanf(fp, "%d", &N_LINES);
@@ -680,7 +692,7 @@ int main()
       GCD(InstructionList[line]->rs, InstructionList[line]->rt);
     }
     else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
-      
+
     }
     else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
       
