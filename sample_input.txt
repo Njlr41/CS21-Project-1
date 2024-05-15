@@ -1,12 +1,15 @@
-9
+14
 .text
-GCD($t0,$t1)
+main: add $t0,$t0,$t0
 add $t0,$t0,$t0
-print_str(msg1)
+exit: add $t0,$t0,$t0
 add $t0,$t0,$t0
-read_str(label,10)
-add $t0,$t0,$t0
-print_integer($t5)
-add $t0,$t0,$t0
+j main
+j 0x00400004
+bne $t0,$0,exit
+beq $t0,$s1,main
+lw $at,4($t2)
+lw $at,($t2)
+lw $s1,msg1
 .data
 allocate_str(msg1,"Enter a string: ")

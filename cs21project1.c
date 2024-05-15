@@ -47,7 +47,7 @@ int IS_ITYPE(char mnem[]);
 int IS_JTYPE(char mnem[]);
 Symbol *GET_TAIL(Symbol *head);
 char *GET_BINARY(int number);
-int HEX_TO_DECIMAL(char* hex);
+int HEX_TO_DECIMAL(char* str);
 
 int main()
 {
@@ -501,9 +501,28 @@ int main()
                 }
               }
               else{ // label
+                /*
+                Decomposes to:
+                  lui $at,0x1000
+                  lw rd,imm($at)
+                */
+                int rd = temp_instruction->rt;
+
+                strcpy(temp_instruction->mnemonic,"lui");
+                temp_instruction->rt = REG_NUMBER("$at");
+                temp_instruction->rs = 0;
+                temp_instruction->immediate = 0x1000;
+                InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+
+                free(temp_instruction);
+                temp_instruction = RESET_TEMP();
+
+                strcpy(temp_instruction->mnemonic,mnemonic);
                 for(i=i+1, j=0; symbol[i]!='\0'; i++, j++)
                   operand[j] = symbol[i];
                 strcpy(temp_instruction->target, operand);
+                temp_instruction->rt = rd;
+                temp_instruction->rs = REG_NUMBER("$at");
               }
           }
           
@@ -547,9 +566,14 @@ int main()
         }
 
         else{ // j-type
-          if(SYMBOL_EXISTS(symbol, head) == -1) APPEND_SYMBOL(symbol, 0, &head);
-          strcpy(temp_instruction->target, symbol);
-          printf("%s",temp_instruction->target);
+          if(symbol[0] == '0') // hex address
+            temp_instruction->immediate = HEX_TO_DECIMAL(symbol);
+
+          else{
+            if(SYMBOL_EXISTS(symbol, head) == -1) APPEND_SYMBOL(symbol, 0, &head);
+            strcpy(temp_instruction->target, symbol);
+            printf("%s",temp_instruction->target);
+          }
         }
 
         printf("=> %s",IS_JTYPE(mnemonic) ? "label" : "operand");
@@ -634,12 +658,12 @@ int main()
       -- NULL =>      IMMEDIATE is offset
       -- NON-NULL =>  IMMEDIATE is distance from BASE_DATA
       */
-    	if (strcmp(InstructionList[line]->mnemonic, "addi") == 0) machine_code = InstructionList[line]->immediate + (8 << 26);
+      if (strcmp(InstructionList[line]->mnemonic, "addi") == 0) machine_code = InstructionList[line]->immediate + (8 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0) machine_code = InstructionList[line]->immediate + (9 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0) machine_code = InstructionList[line]->immediate + (15 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
         if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (35 << 26);
-        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (35 << 26);
+        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA + (35 << 26);
       } 
     	else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
         if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (13 << 26);
@@ -649,18 +673,33 @@ int main()
     	  if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (45 << 26);
         else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (45 << 26);
       }
-      else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0) machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (0x4 << 26);
-    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0) machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (0x5 << 26); 
-
+      else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0)
+        machine_code = (line+1) - (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4 + (0x4 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0)
+        machine_code = (line+1) - (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4 + (0x5 << 26); 
+      //printf("\n%s -> %X",InstructionList[line]->mnemonic, machine_code);
       machine_code = machine_code | (InstructionList[line]->rt << 16);
       machine_code = machine_code | (InstructionList[line]->rs << 21);
+      //printf("\n%s -> %X",InstructionList[line]->mnemonic, machine_code);
     }
 
     else if(IS_JTYPE(InstructionList[line]->mnemonic)){
-      if (strcmp(InstructionList[line]->mnemonic, "j") == 0);
-        machine_code = (0x2 << 26) || ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
-      if (strcmp(InstructionList[line]->mnemonic, "jal") == 0);
-        machine_code = (0x3 << 26) || ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
+      if (strcmp(InstructionList[line]->mnemonic, "j") == 0){
+        if (strcmp(InstructionList[line]->target,"\0")==0){
+          machine_code = (0x2 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
+        }
+        else{
+          machine_code = (0x2 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
+        }
+      }
+      else if (strcmp(InstructionList[line]->mnemonic, "jal") == 0){
+        if (strcmp(InstructionList[line]->target,"\0")==0){
+          machine_code = (0x3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
+        }
+        else{
+          machine_code = (0x3 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
+        }
+      }
     }
 
     else if(IS_MACRO(InstructionList[line]->mnemonic)){
@@ -808,7 +847,7 @@ int main()
     }
 		machine_code_string = GET_BINARY(machine_code);
     fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
-    fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+    fprintf(machinecode, "%s\n", machine_code_string);
   }
   return 0;
 }
@@ -990,17 +1029,6 @@ int IS_JTYPE(char mnem[]){
   for(int i=0; i<2; i++)
     if(strcmp(lst[i], mnem)==0) return 1;
   return 0;
-}
-
-int HEX_TO_DECIMAL(char* hex){
-  int integer; int exp = 0; int decimal = 0;
-  sscanf(hex, "0x%08d", &integer);
-  for(int count = 0; count < 8; count++){
-    decimal = decimal + (integer % 10)*(pow(16,exp++)); 
-    integer = integer/10;
-  }
-  printf("%d", decimal);
-  return decimal;
 }
 
 void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head){
