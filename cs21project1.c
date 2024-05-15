@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 #include "macro_file.c"
 #define BASE_TEXT 0x00400000 // base address for the text segment
 #define BASE_DATA 0x10000000 // base address for the data segment
@@ -649,56 +650,73 @@ int main()
     else if(IS_ITYPE(InstructionList[line]->mnemonic)){
       /*
       I-TYPE INSTRUCTION
-      |000000|XXXXX|XXXXX|XXXXXXXXXXXXXXXX|
-      |funct |rs   |rt   |immediate       |
+      |XXXXXX|XXXXX|XXXXX|XXXXXXXXXXXXXXXX|
+      |opcode|rs   |rt   |immediate       |
       |31:26 |25:21|20:16|15:0            |
+      (1) Shift OPCODE by 26 bits to the left, then add to macihne code
+      (2) Add ZERO-EXTENDED immediate to machine code
+      (3) Add RT and RS to machine code
 
       STORE WORD, LOAD WORD, ORI
-      (1) Check if TARGET is NULL:
+      => Check if TARGET is NULL:
       -- NULL =>      IMMEDIATE is offset
       -- NON-NULL =>  IMMEDIATE is distance from BASE_DATA
       */
-      if (strcmp(InstructionList[line]->mnemonic, "addi") == 0) machine_code = InstructionList[line]->immediate + (8 << 26);
-    	else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0) machine_code = InstructionList[line]->immediate + (9 << 26);
-    	else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0) machine_code = InstructionList[line]->immediate + (15 << 26);
+
+      // (1), (2)
+      if (strcmp(InstructionList[line]->mnemonic, "addi") == 0)
+        machine_code = (8 << 26) + (uint16_t) InstructionList[line]->immediate;
+    	else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0)
+        machine_code = (9 << 26) + (uint16_t) InstructionList[line]->immediate;
+    	else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0)
+        machine_code = (15 << 26) + (uint16_t) InstructionList[line]->immediate;
     	else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
-        if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (35 << 26);
-        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA + (35 << 26);
+        if (strcmp(InstructionList[line]->target,"\0") == 0)
+          machine_code = (35 << 26) + (uint16_t) InstructionList[line]->immediate;
+        else machine_code = (35 << 26) + (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
       } 
     	else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
-        if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (13 << 26);
-        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (13 << 26);
+        if (strcmp(InstructionList[line]->target,"\0") == 0)
+          machine_code = (13 << 26) + (uint16_t) InstructionList[line]->immediate;
+        else machine_code = (13 << 26) + (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
       }
     	else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
-    	  if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (45 << 26);
-        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (45 << 26);
+    	  if (strcmp(InstructionList[line]->target,"\0") == 0)
+          machine_code = (45 << 26) + (uint16_t) InstructionList[line]->immediate;
+        else machine_code = (45 << 26) + (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
       }
       else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0)
-        machine_code = (line+1) - (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4 + (0x4 << 26);
+        machine_code =  (4 << 26) + (uint16_t) (((SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4)-(line+1));
     	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0)
-        machine_code = (line+1) - (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4 + (0x5 << 26); 
-      //printf("\n%s -> %X",InstructionList[line]->mnemonic, machine_code);
+        machine_code = (5 << 26) + (uint16_t) (((SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4)-(line+1));
+      
+      // (3)
       machine_code = machine_code | (InstructionList[line]->rt << 16);
       machine_code = machine_code | (InstructionList[line]->rs << 21);
-      //printf("\n%s -> %X",InstructionList[line]->mnemonic, machine_code);
     }
 
     else if(IS_JTYPE(InstructionList[line]->mnemonic)){
+      /*
+      J-TYPE INSTRUCTION
+      |XXXXXX|XXXXXXXXXXXXXXXXXXXXXXXXXX|
+      |opcode|BTA                       |
+      |32:26 |25:0                      |
+      (1) Shift OPCODE by 26 bits to the left, then add to machine code
+      (2) Check if TARGET is NULL:
+      -- NULL     => HEX ADDRESS (get bits[27:2] only)
+      -- NON-NULL => LABEL
+      */
       if (strcmp(InstructionList[line]->mnemonic, "j") == 0){
-        if (strcmp(InstructionList[line]->target,"\0")==0){
-          machine_code = (0x2 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
-        }
-        else{
-          machine_code = (0x2 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
-        }
+        if (strcmp(InstructionList[line]->target,"\0")==0)
+          machine_code = (2 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
+        else
+          machine_code = (2 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
       }
       else if (strcmp(InstructionList[line]->mnemonic, "jal") == 0){
-        if (strcmp(InstructionList[line]->target,"\0")==0){
-          machine_code = (0x3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
-        }
-        else{
-          machine_code = (0x3 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
-        }
+        if (strcmp(InstructionList[line]->target,"\0")==0)
+          machine_code = (3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
+        else
+          machine_code = (3 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
       }
     }
 
