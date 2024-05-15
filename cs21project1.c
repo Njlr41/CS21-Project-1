@@ -319,32 +319,31 @@ int main()
         char second_input[100] = {};
         char third_input[100] = {};
         int j = 0, i = 0;
-        j = 0;
-        i++;
-        for(; symbol[i] != ','; i++, j++){
-          first_input[j] = symbol[i];
-        }
 
-        j = 0;
-        i++;
-        for(; symbol[i] != '('; i++, j++){
-          second_input[j] = symbol[i];
-        }
+        for(; symbol[i] != ','; i++, j++)
+          first_input[j] = symbol[i]; // rd
 
-        j = 0;
-        i++;
-        for(; symbol[i] != ')'; i++, j++){
-          third_input[j] = symbol[i];
-        }
-        // NOT DONE
+        for(j=0, i=i+1; symbol[i] != '\0'; i++, j++)
+          second_input[j] = symbol[i]; // hex address or label
+
         /*
         Decomposes into:
-
-
+        lui $at,<upper 16 bits>
+        ori rd,$at,<lower 16 bits>
         */
+
+        strcpy(temp_instruction->mnemonic,"lui");
+        temp_instruction->rt = REG_NUMBER("$at");
+        temp_instruction->immediate = second_input[0] == '0' ? HEX_TO_DECIMAL(second_input) >> 16 : 0x1000;
+        InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+
+        free(temp_instruction);
+        temp_instruction = RESET_TEMP();
+
+        temp_instruction->rs = REG_NUMBER("$at");
         temp_instruction->rt = REG_NUMBER(first_input);
-        temp_instruction->immediate = atoi(second_input);
-        temp_instruction->rs = REG_NUMBER(third_input);
+        temp_instruction->immediate = second_input[0] == '0' ? HEX_TO_DECIMAL(second_input) & 0xFFFF : -1;
+        strcpy(temp_instruction->target, second_input[0] == '0' ? "\0" : second_input);
       }
 
       else if(symbol[strlen(symbol)-1] == ')' && strcmp(mnemonic, "\0") == 0){
@@ -488,16 +487,23 @@ int main()
 
               strcpy(operand,"\0"); // reset reg_name
 
-              for(i=i+1, j=0; symbol[i]!='\0' && symbol[i]!='('; i++, j++)
-                operand[j] = symbol[i];
-              temp_instruction->immediate = atoi(operand);
-
-              // lw, sw
-              if(mnemonic[1] == 'w'){ // store to rs
-                strcpy(operand,"\0");
-                for(i=i+1, j=0; symbol[i]!=')'; i++, j++)
+              if(isdigit(symbol[i+1]) || symbol[i+1]=='('){ // imm($rs) or ($rs)
+                for(i=i+1, j=0; symbol[i]!='\0' && symbol[i]!='('; i++, j++)
                   operand[j] = symbol[i];
-                temp_instruction->rs = REG_NUMBER(operand);
+                temp_instruction->immediate = atoi(operand);
+
+                // lw, sw
+                if(mnemonic[1] == 'w'){ // store to rs
+                  strcpy(operand,"\0");
+                  for(i=i+1, j=0; symbol[i]!=')'; i++, j++)
+                    operand[j] = symbol[i];
+                  temp_instruction->rs = REG_NUMBER(operand);
+                }
+              }
+              else{ // label
+                for(i=i+1, j=0; symbol[i]!='\0'; i++, j++)
+                  operand[j] = symbol[i];
+                strcpy(temp_instruction->target, operand);
               }
           }
           
@@ -573,17 +579,12 @@ int main()
       if(strcmp(temp_instruction->mnemonic,"\0")!=0)
         InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
 
-      printf("\nINST_COUNTER: %d",INST_COUNTER);
-      if(INST_COUNTER != 0) if(INST_COUNTER!=0) printf("%s",InstructionList[INST_COUNTER-1]->mnemonic);
-
       // (2)
       strcpy(mnemonic,"\0");
       free(temp_instruction);
       temp_instruction = RESET_TEMP();
 
-      if(IN_DATA_SEGMENT == 1 && !IS_DATA){
-    		ADD_TO_MEMORY(MemoryFile, head);
-      }
+      if(IN_DATA_SEGMENT == 1 && !IS_DATA) ADD_TO_MEMORY(MemoryFile, head);
 
       // (3)
       if(to_break==EOF)
@@ -627,6 +628,11 @@ int main()
       |000000|XXXXX|XXXXX|XXXXXXXXXXXXXXXX|
       |funct |rs   |rt   |immediate       |
       |31:26 |25:21|20:16|15:0            |
+
+      STORE WORD, LOAD WORD, ORI
+      (1) Check if TARGET is NULL:
+      -- NULL =>      IMMEDIATE is offset
+      -- NON-NULL =>  IMMEDIATE is distance from BASE_DATA
       */
     	if (strcmp(InstructionList[line]->mnemonic, "addi") == 0) machine_code = InstructionList[line]->immediate + (8 << 26);
     	else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0) machine_code = InstructionList[line]->immediate + (9 << 26);
@@ -639,9 +645,12 @@ int main()
         if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (13 << 26);
         else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (13 << 26);
       }
-    	else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0) machine_code = InstructionList[line]->immediate + (45 << 26);
-    	else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0) machine_code = 0; // Not Done
-    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0) machine_code = 0; // Not Done
+    	else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
+    	  if (strcmp(InstructionList[line]->target,"\0") == 0) machine_code = InstructionList[line]->immediate + (45 << 26);
+        else machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (45 << 26);
+      }
+      else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0) machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (0x4 << 26);
+    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0) machine_code = SYMBOL_EXISTS(InstructionList[line]->target,head) - 0x10000000 + (0x5 << 26); 
 
       machine_code = machine_code | (InstructionList[line]->rt << 16);
       machine_code = machine_code | (InstructionList[line]->rs << 21);
@@ -802,6 +811,19 @@ int main()
     fprintf(machinecode, "%0*s\n", 32, machine_code_string);
   }
   return 0;
+}
+
+int HEX_TO_DECIMAL(char *str){
+    int num=0;
+    for(int i=2; i<10; i++){
+        if(isdigit(str[i]) || str[i] == '0'){
+            char temp[3] = {str[i],'\0'};
+            num += atoi(temp) * (1 << (4*(7-(i-2))));
+        }
+        else // ASCII: A=65, B=66,..., F=70
+            num += ((int)str[i]-55) * (1 << (4*(7-(i-2))));
+    }
+    return num;
 }
 
 void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
