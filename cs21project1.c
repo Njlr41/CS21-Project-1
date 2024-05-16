@@ -453,6 +453,8 @@ int main()
           // jr
           if(strcmp(mnemonic,"jr")==0){ // store to rs
             temp_instruction->rs = REG_NUMBER(symbol);
+            temp_instruction->rd = 0;
+            temp_instruction->rt = 0;
           }
           
           // move
@@ -702,6 +704,10 @@ int main()
       line = (InstructionList[line]->immediate - BASE_TEXT)/4;
       continue;
     }
+    else if (strcmp(InstructionList[line]->mnemonic, "jr") == 0){
+      line = (RegisterFile[InstructionList[line]->rs] - BASE_TEXT)/4;
+      continue;
+    }
     // Macro
     else if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0){
       // Register Inputs
@@ -751,6 +757,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
 			else if (strcmp(InstructionList[line]->mnemonic, "and") == 0) machine_code = 36;
 			else if (strcmp(InstructionList[line]->mnemonic, "or") == 0) machine_code = 37;
 			else if (strcmp(InstructionList[line]->mnemonic, "slt") == 0) machine_code = 42;
+      else if (strcmp(InstructionList[line]->mnemonic, "jr") == 0) machine_code = 8;
 
 			machine_code = machine_code | (InstructionList[line]->rd << 11);
 			machine_code = machine_code | (InstructionList[line]->rt << 16);
