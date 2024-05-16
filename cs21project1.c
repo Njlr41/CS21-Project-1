@@ -60,6 +60,7 @@ Symbol *GET_TAIL(Symbol *head);
 char *GET_BINARY(int number);
 int HEX_TO_DECIMAL(char* str);
 void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], int INST_COUNTER, Symbol *head);
+char *REG_NAME(int reg_num);
 
 int main()
 {
@@ -552,9 +553,8 @@ int main()
             for(i=i+1, j=0; symbol[i]!=','; i++, j++)
               operand[j] = symbol[i];
             temp_instruction->rt = REG_NUMBER(operand);
-            strcpy(temp_instruction->target,symbol+(i+1));
 
-            if(SYMBOL_EXISTS(symbol, head) == -1) APPEND_SYMBOL(symbol, 0, &head);
+            if(SYMBOL_EXISTS(symbol+(i+1), head) == -1) APPEND_SYMBOL(symbol+(i+1), 0, &head);
             strcpy(temp_instruction->target, symbol+(i+1));
             printf("%s", temp_instruction->target);
           } 
@@ -635,8 +635,8 @@ int main()
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
   GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
   
-    
-  for (int line = 0; line < INST_COUNTER; line++){
+  for (int line = 0; line < INST_COUNTER;){
+    printf("[%d] %s\n", line, InstructionList[line]->mnemonic);
     if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
     // R-Types
     if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
@@ -665,26 +665,42 @@ int main()
       RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + (InstructionList[line]->immediate << 16);
     }
     else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
-      
+      RegisterFile[InstructionList[line]->rt] = LOAD_INT(MemoryFile, RegisterFile[InstructionList[line]->rs]+InstructionList[line]->immediate);
     }
     else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
-      RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] | InstructionList[line]->immediate;
+      RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] | (uint16_t) InstructionList[line]->immediate;
     }
     else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
-      
+      Symbol *temp = (Symbol *)malloc(sizeof(Symbol));
+      strcpy(temp->str_value, "\0");
+      temp->next = NULL;
+      temp->int_value = RegisterFile[InstructionList[line]->rt];
+      temp->address = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
+      ADD_TO_MEMORY(MemoryFile, temp);
+      if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
     }
     else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0){
-      
+      if(RegisterFile[InstructionList[line]->rs] == RegisterFile[InstructionList[line]->rt]){
+        line += 1 + InstructionList[line]->immediate;
+        continue;
+      }
     }
     else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0){
-      
+      if(RegisterFile[InstructionList[line]->rs] != RegisterFile[InstructionList[line]->rt]){
+        line += 1 + InstructionList[line]->immediate;
+        continue;
+      }
     }
     // J-Types
     else if (strcmp(InstructionList[line]->mnemonic, "j") == 0){
-      
+      line = (InstructionList[line]->immediate - BASE_TEXT)/4;
+      continue;
     }
     else if (strcmp(InstructionList[line]->mnemonic, "jal") == 0){
-      
+      // store PC+4 to $ra
+      RegisterFile[REG_NUMBER("$ra")] = BASE_TEXT + 4*(line+1);
+      line = (InstructionList[line]->immediate - BASE_TEXT)/4;
+      continue;
     }
     // Macro
     else if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0){
@@ -706,11 +722,12 @@ int main()
     else if (strcmp(InstructionList[line]->mnemonic, "exit") == 0){
       break;
     }
+    line++;
   }
 
   for (int regnum = 0; regnum < 32; regnum++)
   {
-    printf("Register Number: %d Value: %d\n", regnum, RegisterFile[regnum]);
+    printf("[%-3s | %02d]  Value: 0x%08X / %-10d\n", REG_NAME(regnum), regnum, RegisterFile[regnum], RegisterFile[regnum]);
   }
   return 0;
 }
@@ -766,22 +783,40 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
     	else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
         if (strcmp(InstructionList[line]->target,"\0") == 0)
           machine_code = (35 << 26) + (uint16_t) InstructionList[line]->immediate;
-        else machine_code = (35 << 26) + (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+        else{
+          int addr_offset = (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+          InstructionList[line]->immediate = addr_offset;
+          machine_code = (35 << 26) + addr_offset;
+        }
       } 
     	else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
         if (strcmp(InstructionList[line]->target,"\0") == 0)
           machine_code = (13 << 26) + (uint16_t) InstructionList[line]->immediate;
-        else machine_code = (13 << 26) + (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+        else{
+          int addr_offset = (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+          machine_code = (13 << 26) + addr_offset;
+        }
       }
     	else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
     	  if (strcmp(InstructionList[line]->target,"\0") == 0)
           machine_code = (45 << 26) + (uint16_t) InstructionList[line]->immediate;
-        else machine_code = (45 << 26) + (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+        else{
+          int addr_offset = (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+          InstructionList[line]->immediate = addr_offset;
+          machine_code = (45 << 26) + addr_offset;
+        }
       }
-      else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0)
-        machine_code =  (4 << 26) + (uint16_t) (((SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4)-(line+1));
-    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0)
-        machine_code = (5 << 26) + (uint16_t) (((SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4)-(line+1));
+      else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0){
+        int addr_offset = (((SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4)-(line+1));
+        InstructionList[line]->immediate = addr_offset;
+        machine_code =  (4 << 26) + (uint16_t) addr_offset;
+      }
+        
+    	else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0){
+        int addr_offset = (((SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_TEXT)/4)-(line+1));
+        InstructionList[line]->immediate = addr_offset;
+        machine_code =  (5 << 26) + (uint16_t) addr_offset;
+      }
       
       // (3)
       machine_code = machine_code | (InstructionList[line]->rt << 16);
@@ -802,14 +837,17 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
       if (strcmp(InstructionList[line]->mnemonic, "j") == 0){
         if (strcmp(InstructionList[line]->target,"\0")==0)
           machine_code = (2 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
-        else
-          machine_code = (2 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
+        else{
+          InstructionList[line]->immediate = SYMBOL_EXISTS(InstructionList[line]->target,head);
+          machine_code = (2 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
+        }
       }
       else if (strcmp(InstructionList[line]->mnemonic, "jal") == 0){
         if (strcmp(InstructionList[line]->target,"\0")==0)
           machine_code = (3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
         else
-          machine_code = (3 << 26) | ((SYMBOL_EXISTS(InstructionList[line]->target,head) << 4) >> 6);
+          InstructionList[line]->immediate = SYMBOL_EXISTS(InstructionList[line]->target,head);
+          machine_code = (3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
       }
     }
 
@@ -1264,4 +1302,9 @@ int REG_NUMBER(char reg_name[]){
     default:
       return 0;
   }
+}
+
+char *REG_NAME(int reg_num){
+  static char reg_name[32][4] = {"$0","$at","$v0","$v1","$a0","$a1","$a2","$a3","$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7","$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7","$t8","$t9","$k0","$k1","$gp","$sp","$fp","$ra"};
+  return reg_name[reg_num];
 }
