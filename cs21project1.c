@@ -11,11 +11,9 @@
 typedef struct stack Stack;
 
 struct stack{
-  Stack* sp;
   Stack* next;
   Stack* prev;
   int data;
-  int sp_address;
 };
 
 typedef struct node Symbol;
@@ -63,6 +61,9 @@ int HEX_TO_DECIMAL(char* str);
 void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], int INST_COUNTER, Symbol *head);
 char *REG_NAME(int reg_num);
 int LOAD_INT(char MemoryFile[], int address);
+Stack* CREATE_NODE(int value, Stack* sp);
+void STACK_ALLOCATE(Stack** sp);
+void STACK_DEALLOCATE(Stack** sp);
 
 int main()
 {
@@ -631,6 +632,8 @@ int main()
   PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
   GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
   
+  Stack* stack_pointer = CREATE_NODE(0, NULL);
+
   for (int line = 0; line < INST_COUNTER;){
     printf("[%d] %s\n", line, InstructionList[line]->mnemonic);
     if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
@@ -653,27 +656,71 @@ int main()
     // I-Types
     else if (strcmp(InstructionList[line]->mnemonic, "addi") == 0){
       RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
+      if (InstructionList[line]->rt == REG_NUMBER("$sp")){
+        if (InstructionList[line]->immediate < 0){
+          for(int count = (InstructionList[line]->immediate / 4); count < 0; count++){
+            STACK_ALLOCATE(&stack_pointer);
+          }
+        }
+        else if (InstructionList[line]->immediate > 0){
+          for(int count = (InstructionList[line]->immediate / 4); count > 0; count--){
+            STACK_DEALLOCATE(&stack_pointer);
+          }
+        }
+      }
     }
     else if (strcmp(InstructionList[line]->mnemonic, "addiu") == 0){
       RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
+      if (InstructionList[line]->rt == REG_NUMBER("$sp")){
+        if (InstructionList[line]->immediate < 0){
+          for(int count = (InstructionList[line]->immediate / 4); count < 0; count++){
+            STACK_ALLOCATE(&stack_pointer);
+          }
+        }
+        else if (InstructionList[line]->immediate > 0){
+          for(int count = (InstructionList[line]->immediate / 4); count > 0; count--){
+            STACK_DEALLOCATE(&stack_pointer);
+          }
+        }
+      }
     }
     else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0){
       RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] + (InstructionList[line]->immediate << 16);
     }
     else if (strcmp(InstructionList[line]->mnemonic, "lw") == 0){
-      RegisterFile[InstructionList[line]->rt] = LOAD_INT(MemoryFile, RegisterFile[InstructionList[line]->rs]+InstructionList[line]->immediate);
+      if (InstructionList[line]->rs != REG_NUMBER("$sp")){
+        RegisterFile[InstructionList[line]->rt] = LOAD_INT(MemoryFile, RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate);
+      }
+      else{
+        Stack* temp_pointer = stack_pointer;
+        for (int count = 0; count < (InstructionList[line]->immediate / 4); count++){
+          temp_pointer = temp_pointer->prev;
+        }
+        RegisterFile[InstructionList[line]->rt] = temp_pointer->data;
+      }
+      
     }
     else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
       RegisterFile[InstructionList[line]->rt] = RegisterFile[InstructionList[line]->rs] | (uint16_t) InstructionList[line]->immediate;
     }
     else if (strcmp(InstructionList[line]->mnemonic, "sw") == 0){
-      Symbol *temp = (Symbol *)malloc(sizeof(Symbol));
-      strcpy(temp->str_value, "\0");
-      temp->next = NULL;
-      temp->int_value = RegisterFile[InstructionList[line]->rt];
-      temp->address = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
-      ADD_TO_MEMORY(MemoryFile, temp);
-      if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
+      if (InstructionList[line]->rs != REG_NUMBER("$sp")){
+        Symbol *temp = (Symbol *)malloc(sizeof(Symbol));
+        strcpy(temp->str_value, "\0");
+        temp->next = NULL;
+        temp->int_value = RegisterFile[InstructionList[line]->rt];
+        temp->address = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
+        ADD_TO_MEMORY(MemoryFile, temp);
+        if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
+      }
+      else{
+        Stack* temp_pointer = stack_pointer;
+        for (int count = 0; count < (InstructionList[line]->immediate / 4); count++)
+        {
+          temp_pointer = temp_pointer->prev;
+        }
+        temp_pointer->data = RegisterFile[InstructionList[line]->rt];
+      }
     }
     else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0){
       if(RegisterFile[InstructionList[line]->rs] == RegisterFile[InstructionList[line]->rt]){
@@ -728,6 +775,12 @@ int main()
   {
     printf("[%-3s | %02d]  Value: 0x%08X / %-10d\n", REG_NAME(regnum), regnum, RegisterFile[regnum], RegisterFile[regnum]);
   }
+
+  
+  do {
+    printf("%d\n", stack_pointer->data);
+    stack_pointer = stack_pointer->prev;
+  } while (stack_pointer->prev != NULL);
   return 0;
 }
 
@@ -1307,4 +1360,30 @@ int REG_NUMBER(char reg_name[]){
 char *REG_NAME(int reg_num){
   static char reg_name[32][4] = {"$0","$at","$v0","$v1","$a0","$a1","$a2","$a3","$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7","$s0","$s1","$s2","$s3","$s4","$s5","$s6","$s7","$t8","$t9","$k0","$k1","$gp","$sp","$fp","$ra"};
   return reg_name[reg_num];
+}
+
+Stack* CREATE_NODE(int value, Stack* sp){
+  Stack* node = (Stack*)malloc(sizeof(Stack));
+  node->data = value;
+  node->prev = sp;
+  node->next = NULL;
+  if (sp != NULL){
+    sp->next = node;
+  }
+  return node;
+}
+
+void STACK_ALLOCATE(Stack** sp){
+  if ((*sp)->next == NULL){
+    CREATE_NODE(0, (*sp));
+    (*sp) = (*sp)->next;
+  }
+  else
+  {
+    (*sp) = (*sp)->next;
+  }
+}
+
+void STACK_DEALLOCATE(Stack** sp){
+  (*sp) = (*sp)->prev;
 }

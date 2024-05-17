@@ -1,9 +1,11 @@
-7
+4
 .text
-li $t0,5
-li $t1,0
-loop: addi $t1,$t1,1
-jal 0x0040001C
-ori $s1,$t0,45
-stop: ori $s1,$t0,30
-add $s1,$s1,$s1
+li $t1,5
+li $t2,10
+li $t3,7
+addi $sp,$sp,-12
+sw $t1,0($sp)
+sw $t3,4($sp)
+sw $t2,8($sp)
+addi $sp,$sp,4
+lw $t4,4($sp)
