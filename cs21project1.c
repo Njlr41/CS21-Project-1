@@ -70,7 +70,7 @@ Stack* CREATE_NODE(int value, Stack* sp);
 
 // MEMORY OPERATIONS
 int LOAD_INT(char MemoryFile[], int address);
-int LOAD_STRING(char MemoryFile[], int address);
+char* LOAD_STRING(char MemoryFile[], int address);
 void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable);
 void STACK_ALLOCATE(Stack** sp);
 void STACK_DEALLOCATE(Stack** sp);
@@ -638,7 +638,9 @@ int main()
     PRINT_DATA_SEGMENT(head);
     PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
     GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
+    printf("Assemble: operation completed successfully.\n");
     
+    // Execution
     for (int line = 0; line < INST_COUNTER;){
         printf("[%d] %s\n", line, InstructionList[line]->mnemonic);
         if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
@@ -775,7 +777,36 @@ int main()
             line = (RegisterFile[InstructionList[line]->rs] - BASE_TEXT)/4;
             continue;
         }
+        // Syscall
+        else if (strcmp(InstructionList[line]->mnemonic, "syscall") == 0){
+            // Print Int
+            if (RegisterFile[REG_NUMBER("$v0")] == 1){
+                int integer = RegisterFile[REG_NUMBER("%a0")];
+                printf("%d", integer);
+            }
+            // Print String
+            else if (RegisterFile[REG_NUMBER("$v0")] == 4){
+                char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
+                printf("%s", string);
+            }
+            // Read String
+            else if (RegisterFile[REG_NUMBER("$v0")] == 8){
+                char* string;
+                scanf("%s", &string);
+                //ADD_TO_MEMORY()
+                // NOT DONE
 
+            }
+            // Exit
+            else if (RegisterFile[REG_NUMBER("$v0")] == 10){
+                break;
+            }
+            // Print Character
+            else if (RegisterFile[REG_NUMBER("$v0")] == 11){
+                char character = (char)RegisterFile[REG_NUMBER("$a0")];
+                printf("%c", character);
+            }
+        }
         // Macro
         else if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0){
             GCD(RegisterFile[4], RegisterFile[5]); // $a0 = 4, $a1 = 5
@@ -1157,7 +1188,7 @@ int LOAD_INT(char MemoryFile[], int address){
     return value;
 }
 
-int LOAD_STRING(char MemoryFile[], int address){
+char* LOAD_STRING(char MemoryFile[], int address){
     return MemoryFile + (BASE_DATA-address);
 }
 

@@ -1,11 +1,5 @@
 4
 .text
-li $t1,5
-li $t2,10
-li $t3,7
-addi $sp,$sp,-12
-sw $t1,0($sp)
-sw $t3,4($sp)
-sw $t2,8($sp)
-addi $sp,$sp,4
-lw $t4,4($sp)
+li $a0,76
+li $v0,11
+syscall
