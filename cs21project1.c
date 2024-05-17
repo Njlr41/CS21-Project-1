@@ -381,16 +381,8 @@ int main()
         for(int j=0; symbol[i] != '('; i++, j++) macro_type[j] = symbol[i];
         strcpy(temp_instruction->mnemonic, macro_type);
 
-        // Two Parameters
-        if(strcmp(macro_type, "GCD") == 0){
-          for(i=i+1, j=0; symbol[i] != ','; i++, j++) first_input[j] = symbol[i];
-          for(i=i+1, j=0; symbol[i] != ')'; i++, j++) second_input[j] = symbol[i];
-
-          temp_instruction->rs = REG_NUMBER(first_input);
-          temp_instruction->rt = REG_NUMBER(second_input);
-        }
         // One Parameter
-        else if(strcmp(macro_type, "print_str") == 0){
+        if(strcmp(macro_type, "print_str") == 0){
           for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
           strcpy(temp_instruction->target, first_input);
 
@@ -710,8 +702,7 @@ int main()
     }
     // Macro
     else if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0){
-      // Register Inputs
-      GCD(InstructionList[line]->rs, InstructionList[line]->rt);
+      GCD(RegisterFile[4], RegisterFile[5]);
     }
     else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
 
@@ -1307,7 +1298,7 @@ int REG_NUMBER(char reg_name[]){
     case 'r':
       return 31;
     default:
-      return 0;
+       return 0;
   }
 }
 
