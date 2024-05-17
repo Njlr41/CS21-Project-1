@@ -791,11 +791,25 @@ int main()
             }
             // Read String
             else if (RegisterFile[REG_NUMBER("$v0")] == 8){
-                char* string;
-                scanf("%s", &string);
-                //ADD_TO_MEMORY()
-                // NOT DONE
-
+                if (RegisterFile[REG_NUMBER("$a1")] < 1) continue;
+                else if (RegisterFile[REG_NUMBER("$a1")] == 1){
+                    // Ignore Input; Store NULL byte to memory
+                }
+                else{
+                    int c;
+                    char string[RegisterFile[REG_NUMBER("$a1")]];
+                    scanf("%s", &string);
+                    for (c = 0; c < strlen(string); c++){
+                        // Store string[c] into Memory
+                    }
+                    if (c != RegisterFile[REG_NUMBER("$a1")]){
+                        // Store newline into Memory
+                        c++;
+                    }
+                    for (; c < RegisterFile[REG_NUMBER("$a1")]; c++){
+                        // Pad with NULL byte
+                    }
+                }
             }
             // Exit
             else if (RegisterFile[REG_NUMBER("$v0")] == 10){
