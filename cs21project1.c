@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "macro_file.c"
 #define BASE_TEXT 0x00400000 // base address for the text segment
 #define BASE_DATA 0x10000000 // base address for the data segment
@@ -61,6 +62,7 @@ char *GET_BINARY(int number);
 int HEX_TO_DECIMAL(char* str);
 void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], int INST_COUNTER, Symbol *head);
 char *REG_NAME(int reg_num);
+int LOAD_INT(char MemoryFile[], int address);
 
 int main()
 {
