@@ -1,5 +1,7 @@
 4
 .text
-li $a0,76
-li $v0,11
+li $v0,4
+la $a0,hello
 syscall
+.data
+hello: .asciiz "ABCD"

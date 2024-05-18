@@ -323,7 +323,7 @@ int main()
 
                 // LOAD UPPER IMMEDIATE
                 strcpy(temp_instruction->mnemonic, "lui");
-                temp_instruction->rs = REG_NUMBER("$at");
+                temp_instruction->rt = REG_NUMBER("$at");
                 temp_instruction->immediate = upper;
                 InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
 
@@ -341,7 +341,7 @@ int main()
                 /*
                 DECOMPOSES TO:
                 -- lui $at,<upper 16 bits>
-                -- ori rd,$at,<lower 16 bits>
+                -- ori rt,$at,<lower 16 bits>
                 */
                 printf("=> operand");
                 char first_input[100] = {};
@@ -710,7 +710,6 @@ int main()
         }
         else if (strcmp(InstructionList[line]->mnemonic, "lui") == 0){
             RegisterFile[InstructionList[line]->rt] =
-            RegisterFile[InstructionList[line]->rs] +
             (InstructionList[line]->immediate << 16);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "ori") == 0){
@@ -787,7 +786,7 @@ int main()
             // Print String
             else if (RegisterFile[REG_NUMBER("$v0")] == 4){
                 char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
-                printf("%s", string);
+                printf("TEST:%s", string);
             }
             // Read String
             else if (RegisterFile[REG_NUMBER("$v0")] == 8){
@@ -910,6 +909,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                     machine_code = (13 << 26) + (uint16_t) InstructionList[line]->immediate;
                 else{
                     int addr_offset = (SYMBOL_EXISTS(InstructionList[line]->target,head) - BASE_DATA);
+                    InstructionList[line]->immediate = addr_offset;
                     machine_code = (13 << 26) + addr_offset;
                 }
             }
@@ -967,7 +967,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
         }
 
         else if (IS_MACRO(InstructionList[line]->mnemonic)) {
-            if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0) machine_code = 201342976;
+            if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0) machine_code = 134234112;
             else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
                 /*
                 DECOMPOSES TO
