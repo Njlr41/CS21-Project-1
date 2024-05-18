@@ -392,7 +392,7 @@ int main()
 
                 // One Parameter
                 if(strcmp(macro_type, "print_str") == 0){
-                    for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
+                    for(i = i + 1, j = 0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
                     strcpy(temp_instruction->target, first_input);
 
                     for(int m = 0; m < 4; m++){
@@ -641,10 +641,10 @@ int main()
     printf("Assemble: operation completed successfully.\n");
     
     // Execution
-    for (int line = 0; line < INST_COUNTER;){
+    for (int line = 0; line < INST_COUNTER; line++){
         printf("[%d] %s\n", line, InstructionList[line]->mnemonic);
         if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
-        
+
         // R-Types
         if (strcmp(InstructionList[line]->mnemonic, "add") == 0){
             RegisterFile[InstructionList[line]->rd] = 
@@ -825,7 +825,8 @@ int main()
             GCD(RegisterFile[4], RegisterFile[5]); // $a0 = 4, $a1 = 5
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
-
+            char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
+            printf("WORK?:%s", string);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
         
@@ -837,7 +838,6 @@ int main()
         
         }
         else if (strcmp(InstructionList[line]->mnemonic, "exit") == 0) break;
-        line++;
     }
     
     PRINT_REGISTER_FILE(RegisterFile);

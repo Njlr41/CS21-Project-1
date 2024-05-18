@@ -1,7 +1,9 @@
-4
+7
 .text
+print_str(help)
 li $v0,4
-la $a0,hello
+la $a0,help
 syscall
 .data
-hello: .asciiz "ABCD"
+help: .asciiz "HELP"
+
