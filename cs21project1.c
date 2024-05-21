@@ -788,7 +788,7 @@ int main()
                 char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
                 printf("%s", string);
             }
-            // Read String
+            // Read String NOT DONE
             else if (RegisterFile[REG_NUMBER("$v0")] == 8){
                 if (RegisterFile[REG_NUMBER("$a1")] < 1) continue;
                 else if (RegisterFile[REG_NUMBER("$a1")] == 1){
@@ -806,7 +806,7 @@ int main()
                         c++;
                     }
                     for (; c < RegisterFile[REG_NUMBER("$a1")]; c++){
-                        // Pad with NULL byte
+                        // Pad with NULL bytes
                     }
                 }
             }
@@ -829,14 +829,18 @@ int main()
             printf("%s", string);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
-            
+            char* string;
+            scanf("%s", &string);
+            // Store string to address of label NOT DONE
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
             int integer = LOAD_INT(MemoryFile, InstructionList[line]->immediate);
             printf("%d", integer);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_integer") == 0){
-        
+            int integer;
+            scanf("%d", &integer);
+            // Store integer to address of label NOT DONE
         }
         else if (strcmp(InstructionList[line]->mnemonic, "exit") == 0) break;
     }
@@ -1036,6 +1040,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // LOAD ADDRESS
                 int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
                 int upper = address, lower = address;
+                InstructionList[line]->immediate = address;
                 upper = upper >> 16;
                 lower = lower & 0xFFFF;
 
@@ -1133,10 +1138,13 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 machine_code = 0;
             }
             else if(strcmp(InstructionList[line]->mnemonic, "read_integer") == 0){
-                /*
+                /* NOT DONE
                 DECOMPOSES TO:
 
                 */
+                int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
+                InstructionList[line]->immediate = address;
+
             }
             else if(strcmp(InstructionList[line]->mnemonic, "exit") == 0){
                 /*
