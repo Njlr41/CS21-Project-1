@@ -8,11 +8,11 @@
 #define BASE_TEXT 0x00400000 // base address for the text segment
 #define BASE_DATA 0x10000000 // base address for the data segment
 
-typedef struct stack Stack;
+typedef struct stacknode StackNode;
 
-struct stack{
-    Stack* next;
-    Stack* prev;
+struct stacknode{
+    StackNode* next;
+    StackNode* prev;
     int data;
 };
 
@@ -66,14 +66,14 @@ int REG_NUMBER(char reg_name[]);
 char *REG_NAME(int reg_num);
 Instruction *CREATE_INSTRUCTION(Instruction *temp);
 Instruction* RESET_TEMP();
-Stack* CREATE_NODE(int value, Stack* sp);
+StackNode* CREATE_NODE(int value, StackNode* sp);
 
 // MEMORY OPERATIONS
 int LOAD_INT(char MemoryFile[], int address);
 char* LOAD_STRING(char MemoryFile[], int address);
 void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable);
-void STACK_ALLOCATE(Stack** sp);
-void STACK_DEALLOCATE(Stack** sp);
+void STACK_ALLOCATE(StackNode** sp);
+void STACK_DEALLOCATE(StackNode** sp);
 
 int main()
 {
@@ -98,7 +98,7 @@ int main()
 
     // Initialize MEMORY and REGISTER FILE
     char MemoryFile[1000] = {};
-    Stack* StackPointer = CREATE_NODE(0, NULL);
+    StackNode* StackPointer = CREATE_NODE(0, NULL);
     int RegisterFile[32] = {0};
     RegisterFile[29] = 0x7FFFFFFC; // $sp
 
@@ -724,7 +724,7 @@ int main()
                 InstructionList[line]->immediate);
             }
             else{ // LOAD FROM STACK
-                Stack* temp_pointer = StackPointer;
+                StackNode* temp_pointer = StackPointer;
                 for (int count = 0; count < (InstructionList[line]->immediate / 4); count++)
                     temp_pointer = temp_pointer->prev;
                 RegisterFile[InstructionList[line]->rt] = temp_pointer->data;
@@ -742,7 +742,7 @@ int main()
                 if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
             }
             else { // STORE TO STACK
-                Stack* temp_pointer = StackPointer;
+                StackNode* temp_pointer = StackPointer;
                 for (int count = 0; count < (InstructionList[line]->immediate / 4); count++)
                     temp_pointer = temp_pointer->prev;
                 temp_pointer->data = RegisterFile[InstructionList[line]->rt];
@@ -1214,7 +1214,7 @@ void PRINT_REGISTER_FILE(int RegisterFile[]){
         printf("[%-3s | %02d]  Value: 0x%08X / %-10d\n", REG_NAME(regnum), regnum, RegisterFile[regnum], RegisterFile[regnum]);
 }
 
-void PRINT_STACK_MEMORY(Stack *StackPointer){
+void PRINT_STACK_MEMORY(StackNode *StackPointer){
     if(!StackPointer){
         printf("Stack memory is empty...");
         return;
@@ -1484,8 +1484,8 @@ char *REG_NAME(int reg_num){
     return reg_name[reg_num];
 }
 
-Stack* CREATE_NODE(int value, Stack* sp){
-    Stack* node = (Stack*)malloc(sizeof(Stack));
+StackNode* CREATE_NODE(int value, StackNode* sp){
+    StackNode* node = (StackNode*)malloc(sizeof(StackNode));
     node->data = value;
     node->prev = sp;
     node->next = NULL;
@@ -1493,7 +1493,7 @@ Stack* CREATE_NODE(int value, Stack* sp){
     return node;
 }
 
-void STACK_ALLOCATE(Stack** sp){
+void STACK_ALLOCATE(StackNode** sp){
     if ((*sp)->next == NULL){
         CREATE_NODE(0, (*sp));
         (*sp) = (*sp)->next;
@@ -1502,6 +1502,6 @@ void STACK_ALLOCATE(Stack** sp){
         (*sp) = (*sp)->next;
 }
 
-void STACK_DEALLOCATE(Stack** sp){
+void STACK_DEALLOCATE(StackNode** sp){
     (*sp) = (*sp)->prev;
 }
