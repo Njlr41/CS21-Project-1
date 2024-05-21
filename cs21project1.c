@@ -780,13 +780,13 @@ int main()
         else if (strcmp(InstructionList[line]->mnemonic, "syscall") == 0){
             // Print Int
             if (RegisterFile[REG_NUMBER("$v0")] == 1){
-                int integer = RegisterFile[REG_NUMBER("%a0")];
+                int integer = RegisterFile[REG_NUMBER("$a0")];
                 printf("%d", integer);
             }
             // Print String
             else if (RegisterFile[REG_NUMBER("$v0")] == 4){
                 char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
-                printf("TEST:%s", string);
+                printf("%s", string);
             }
             // Read String
             else if (RegisterFile[REG_NUMBER("$v0")] == 8){
@@ -822,17 +822,18 @@ int main()
         }
         // Macro
         else if (strcmp(InstructionList[line]->mnemonic, "GCD") == 0){
-            GCD(RegisterFile[4], RegisterFile[5]); // $a0 = 4, $a1 = 5
+            printf("%d", GCD(RegisterFile[4], RegisterFile[5])); // $a0 = 4, $a1 = 5
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_str") == 0){
-            char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
-            printf("WORK?:%s", string);
+            char* string = LOAD_STRING(MemoryFile, InstructionList[line]->immediate);
+            printf("%s", string);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
-        
+            
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
-        
+            int integer = LOAD_INT(MemoryFile, InstructionList[line]->immediate);
+            printf("%d", integer);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_integer") == 0){
         
@@ -983,6 +984,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // LOAD ADDRESS
                 int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
                 int upper = address; int lower = address;
+                InstructionList[line]->immediate = address;
                 upper = upper >> 16;
                 lower = lower & 65535;
 
@@ -1097,6 +1099,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // LOAD ADDRESS
                 int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
                 int upper = address; int lower = address;
+                InstructionList[line]->immediate = address;
                 upper = upper >> 16;
                 lower = lower & 65535;
 

@@ -1,9 +1,9 @@
 7
 .text
-print_str(help)
-li $v0,4
-la $a0,help
+print_integer(help)
+li $v0,1
+lw $a0,help
 syscall
 .data
-help: .asciiz "HELP"
+help: .word 5
 
