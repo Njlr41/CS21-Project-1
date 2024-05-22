@@ -132,7 +132,8 @@ int main()
         else if(IN_DATA_SEGMENT==1){ // DATA SEGMENT
             if (symbol[strlen(symbol)-1] == ':' && 
                 strcmp(mnemonic,"allocate_str") != 0 && 
-                strcmp(mnemonic,".asciiz") != 0) {
+                strcmp(mnemonic,".asciiz") != 0 &&
+                strncmp(symbol, "allocate_str", strlen("allocate_str")) != 0) {
                 /*
                 LABEL Definition
                 (1) Remove ':' in symbol
@@ -407,7 +408,7 @@ int main()
                     for(i=i+1, j=0; symbol[i] != ','; i++, j++) first_input[j] = symbol[i];
                     for(i=i+1, j=0; symbol[i] != ')'; i++, j++) second_input[j] = symbol[i];
                     strcpy(temp_instruction->target, first_input);
-                    temp_instruction->immediate = atoi(second_input);
+                        temp_instruction->rs = atoi(second_input);
 
                     for(int m = 0; m < 6; m++){
                         InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
@@ -790,24 +791,19 @@ int main()
             }
             // Read String NOT DONE
             else if (RegisterFile[REG_NUMBER("$v0")] == 8){
-                if (RegisterFile[REG_NUMBER("$a1")] < 1) continue;
-                else if (RegisterFile[REG_NUMBER("$a1")] == 1){
-                    // Ignore Input; Store NULL byte to memory
-                }
+                if (RegisterFile[REG_NUMBER("$a1")] <= 1) continue;
                 else{
-                    int c;
                     char string[RegisterFile[REG_NUMBER("$a1")]];
                     scanf("%s", &string);
-                    for (c = 0; c < strlen(string); c++){
-                        // Store string[c] into Memory
-                    }
-                    if (c != RegisterFile[REG_NUMBER("$a1")]){
-                        // Store newline into Memory
-                        c++;
-                    }
-                    for (; c < RegisterFile[REG_NUMBER("$a1")]; c++){
-                        // Pad with NULL bytes
-                    }
+                    string[RegisterFile[REG_NUMBER("$a1")] - 1] = '\0';
+                    Symbol* temp = (Symbol*)malloc(sizeof(Symbol));
+                    temp->address = RegisterFile[REG_NUMBER("$a0")];
+                    temp->next = NULL;
+                    printf("test: %d %d\n", strlen(string), RegisterFile[REG_NUMBER("$a1")] - 1);
+                    if (strlen(string) < RegisterFile[REG_NUMBER("$a1")] - 1) strcat(string, "\n");
+                    strcpy(temp->str_value,string);
+                    ADD_TO_MEMORY(MemoryFile, temp);
+                    if(temp->address + RegisterFile[REG_NUMBER("$a1")] > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address + RegisterFile[REG_NUMBER("$a1")] - BASE_DATA;
                 }
             }
             // Exit
@@ -829,9 +825,16 @@ int main()
             printf("%s", string);
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
-            char* string;
+            char string[InstructionList[line]->rs];
             scanf("%s", &string);
-            // Store string to address of label NOT DONE
+            string[InstructionList[line]->rs - 1] = '\0';
+            Symbol* temp = (Symbol*)malloc(sizeof(Symbol));
+            temp->address = InstructionList[line]->immediate;
+            temp->next = NULL;
+            if (strlen(string) < InstructionList[line]->rs - 1) strcat(string, "\n");
+            strcpy(temp->str_value,string);
+            ADD_TO_MEMORY(MemoryFile, temp);
+            if(temp->address + InstructionList[line]->rs > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address + InstructionList[line]->rs - BASE_DATA;
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
             int integer = LOAD_INT(MemoryFile, InstructionList[line]->immediate);
@@ -846,7 +849,9 @@ int main()
     }
     
     PRINT_REGISTER_FILE(RegisterFile);
-    PRINT_STACK_MEMORY(StackPointer);
+    PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
+    printf("%d\n", BYTE_COUNTER);
+    //PRINT_STACK_MEMORY(StackPointer);
     return 0;
 }
 
@@ -1223,15 +1228,15 @@ void PRINT_REGISTER_FILE(int RegisterFile[]){
 }
 
 void PRINT_STACK_MEMORY(StackNode *StackPointer){
-    if(!StackPointer){
+    if(StackPointer == NULL){
         printf("Stack memory is empty...");
         return;
     }
 
-    do {
+    while (StackPointer->prev != NULL) {
         printf("%d\n", StackPointer->data);
         StackPointer = StackPointer->prev;
-    } while (StackPointer->prev != NULL);
+    }
 }
 
 void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
@@ -1384,7 +1389,7 @@ void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head){
         *head = new_symbol;
     else{
         // append symbol at the end of the table
-        Symbol *temp = GET_TAIL(head);
+        Symbol *temp = GET_TAIL(*head);
         temp->next = new_symbol;
     }
 }
