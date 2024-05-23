@@ -432,7 +432,7 @@ int main()
                 // One Parameter
                 else if(strcmp(macro_type, "read_integer") == 0){
                     for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
-                    temp_instruction->immediate = atoi(first_input);
+                    strcpy(temp_instruction->target, first_input);
                     //NOT DONE
                 }
                 // ERROR CHECK
@@ -789,7 +789,7 @@ int main()
                 char* string = LOAD_STRING(MemoryFile, RegisterFile[REG_NUMBER("$a0")]);
                 printf("%s", string);
             }
-            // Read String NOT DONE
+            // Read String
             else if (RegisterFile[REG_NUMBER("$v0")] == 8){
                 if (RegisterFile[REG_NUMBER("$a1")] <= 1) continue;
                 else{
@@ -843,14 +843,21 @@ int main()
         else if (strcmp(InstructionList[line]->mnemonic, "read_integer") == 0){
             int integer;
             scanf("%d", &integer);
-            // Store integer to address of label NOT DONE
+            Symbol* temp = (Symbol*)malloc(sizeof(Symbol));
+            strcpy(temp->str_value, "\0");
+            temp->next = NULL;
+            temp->int_value = integer;
+            temp->address = InstructionList[line]->immediate;
+
+            ADD_TO_MEMORY(MemoryFile, temp);
+            //if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
+            // NOT DONE
         }
         else if (strcmp(InstructionList[line]->mnemonic, "exit") == 0) break;
     }
     
     PRINT_REGISTER_FILE(RegisterFile);
     PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
-    printf("%d\n", BYTE_COUNTER);
     //PRINT_STACK_MEMORY(StackPointer);
     return 0;
 }

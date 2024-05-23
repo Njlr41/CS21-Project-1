@@ -1,2 +1,1 @@
-nstructionList[line]->rs - 1);
-            if (strlen(stri
+ADD_TO_MEMORY
