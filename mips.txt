@@ -1,8 +1,9 @@
- 11
+ 12
 .include "macros.asm"
 .text
 main: print_str(msg1)
 read_str(name,10)
+la $t1,msg1
 print_str(msg2)
 print_str(name)
 exit()

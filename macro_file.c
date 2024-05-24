@@ -2,25 +2,29 @@
 #include <stdio.h>
 
 int GCD(int x, int y){
-  for(x,y; y!=0;){
-   int temp = x;
-   x = y;
-   y = temp%y;
-  } 
-  return x;
-};
-void print_str(char* string){
-  printf("%s", string);
+    for(x,y; y!=0;){
+        int temp = x;
+        x = y;
+        y = temp % y;
+    } 
+    return x;
 }
+
+void print_str(char* string){
+    printf("%s", string);
+}
+
 void read_str(char* string, int length){
-  fgets(string, length, stdin);
-} // Ask Ma'am regarding parameters
+    fgets(string, length, stdin);
+}
+
 void print_integer(int number){
-  printf("%d", number);
+    printf("%d", number);
 }
 void read_integer(int number){
-  scanf("%d", &number);
+    scanf("%d", &number);
 }
+
 void exit();
 
 

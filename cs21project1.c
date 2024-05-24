@@ -41,8 +41,8 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
 // SYMBOL TABLE OPERATIONS
 void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head);
 void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head);
-void UPDATE_STR(char str_value[], Symbol *head);
-void UPDATE_INT(int int_value, Symbol *head);
+void UPDATE_STR(char str_value[], Symbol *head, char *symbol_name);
+void UPDATE_INT(int int_value, Symbol *head, char *symbol_name);
 
 // DISPLAY
 void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER);
@@ -60,6 +60,7 @@ int SYMBOL_EXISTS(char symbol_name[], Symbol *head);
 
 // UTILITY
 Symbol *GET_TAIL(Symbol *head);
+Symbol *GET_LABEL(Symbol *head, char *symbol_name);
 char *GET_BINARY(int number);
 int HEX_TO_DECIMAL(char* str);
 int REG_NUMBER(char reg_name[]);
@@ -71,7 +72,7 @@ StackNode* CREATE_NODE(int value, StackNode* sp);
 // MEMORY OPERATIONS
 int LOAD_INT(char MemoryFile[], int address);
 char* LOAD_STRING(char MemoryFile[], int address);
-void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable);
+void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable, char *symbol_name);
 void STACK_ALLOCATE(StackNode** sp);
 void STACK_DEALLOCATE(StackNode** sp);
 
@@ -95,6 +96,7 @@ int main()
 
     // Initialize SYMBOL TABLE
     Symbol *head = NULL;
+    char temp_label[100] = {};
 
     // Initialize MEMORY and REGISTER FILE
     char MemoryFile[1000] = {};
@@ -122,6 +124,10 @@ int main()
             printf("=> text segment");
         }
         else if(strcmp(symbol,".include")==0 || strcmp(symbol, "\"macros.asm\"") == 0){
+            /*
+            MACRO FILE
+            -- ignore
+            */
             IN_DATA_SEGMENT = 0;
             printf("=> include");
         }
@@ -150,9 +156,10 @@ int main()
             
                 symbol[strlen(symbol)-1] = '\0';
                 if(SYMBOL_EXISTS(symbol, head) != -1)
-                UPDATE_ADDRESS(symbol, BYTE_COUNTER, 1, head);
+                    UPDATE_ADDRESS(symbol, BYTE_COUNTER, 1, head);
                 else
-                APPEND_SYMBOL(symbol, BASE_DATA + BYTE_COUNTER, &head);
+                    APPEND_SYMBOL(symbol, BASE_DATA + BYTE_COUNTER, &head);
+                strcpy(temp_label, symbol);
                 printf("=> label");
             }
             else if(symbol[0] == '.'){
@@ -176,13 +183,13 @@ int main()
                 */
 
                 if (symbol[strlen(symbol)-1] == '"'){
-                    BYTE_COUNTER += (strlen(symbol)-1);   // (length-2)+1
-                    symbol[strlen(symbol)-1] = '\0';      // remove closing "
+                    BYTE_COUNTER += (strlen(symbol)-1);     // (length-2)+1
+                    symbol[strlen(symbol)-1] = '\0';        // remove closing "
                 }
                 else if (symbol[strlen(symbol)-1] == ')'){
-                    BYTE_COUNTER += (strlen(symbol)-1); // (length-2)+1
-                    symbol[strlen(symbol)-1] = '\0';    // remove closing )
-                    symbol[strlen(symbol)-1] = '\0';    // remove closing "
+                    BYTE_COUNTER += (strlen(symbol)-1);     // (length-2)+1
+                    symbol[strlen(symbol)-1] = '\0';        // remove closing )
+                    symbol[strlen(symbol)-1] = '\0';        // remove closing "
                 }
                 else {
                     BYTE_COUNTER += (strlen(symbol)+1);
@@ -190,9 +197,9 @@ int main()
                 
                 // update str_value of corresponding symbol
                 if(symbol[0] == '"')
-                    UPDATE_STR(symbol+1, head);         // remove opening "
+                    UPDATE_STR(symbol+1, head, temp_label);             // remove opening "
                 else
-                    UPDATE_STR(symbol, head);
+                    UPDATE_STR(symbol, head, temp_label);
                 
                 printf("=> string");
             }
@@ -203,8 +210,8 @@ int main()
                 (2) Update INT_VALUE of LABEL
                 (3) Increment BYTE_COUNTER by 4 (size of an integer is 4 bytes)
                 */
-                UPDATE_INT(atoi(symbol), head);
                 Symbol *tail = GET_TAIL(head);
+                UPDATE_INT(atoi(symbol), head, tail->name);
                 BYTE_COUNTER = BYTE_COUNTER % 4 == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));
                 UPDATE_ADDRESS(tail->name, BYTE_COUNTER, 1, head);
                 BYTE_COUNTER+=4;
@@ -231,39 +238,50 @@ int main()
                                                     ^ starting index
                 (1) Get LABEL_NAME
                 (2) Get INT_VALUE and convert to integer using atoi()
-                (3) Add LABEL to symbol table
-                (4) Update INT_VALUE of LABEL
-                (5) Update BYTE_COUNTER by 4 (size of integer is 4 bytes) 
+                (3) Word-align BYTE_COUNTER
+                (4) Add LABEL to symbol table
+                (5) Update INT_VALUE of LABEL
+                (6) Update BYTE_COUNTER by 4 (size of integer is 4 bytes) 
                 */
                 printf("=> macro");
-                if(symbol[9]=='s'){
+                if(symbol[9]=='s'){ 
+                    // ALLOCATE_STR
                     strcpy(mnemonic, "allocate_str");
                     char label_name[100] = {}, str_value[100] = {};
                     int i=13, j=0;
 
                     for(; symbol[i] != ','; i++, j++)
-                    label_name[j] = symbol[i];
+                        label_name[j] = symbol[i];
+                    printf("e");
+                    strcpy(temp_label, label_name);
+                    printf("e");
                     for(i=i+2, j=0; symbol[i] != '"' && symbol[i] != '\0'; i++, j++)
-                    str_value[j] = symbol[i];
+                        str_value[j] = symbol[i];
                     
-                    APPEND_SYMBOL(label_name, BASE_DATA + BYTE_COUNTER, &head);
-                    UPDATE_STR(str_value, head);
+                    if(SYMBOL_EXISTS(label_name, head) == -1)
+                        APPEND_SYMBOL(label_name, BASE_DATA + BYTE_COUNTER, &head);
+                    else
+                        UPDATE_ADDRESS(label_name, BYTE_COUNTER, 1, head);
+                    UPDATE_STR(str_value, head, label_name);
                     BYTE_COUNTER += (strlen(str_value)+1);
                 }
                 else{
+                    // ALLOCATE_BYTES / INT
                     char label_name[100] = {}, int_value[100] = {};
                     int i=15, j=0;
 
                     for(; symbol[i]!=','; i++, j++)
-                    label_name[j] = symbol[i];
+                    label_name[j] = symbol[i];              // LABEL NAME
                     for(i=i+1,j=0;symbol[i]!=')';i++,j++)
-                    int_value[j] = symbol[i];
+                    int_value[j] = symbol[i];               // INTEGER VALUE
                     
-                    BYTE_COUNTER = (BYTE_COUNTER % 4) == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));
-                    printf("$s");
-                    APPEND_SYMBOL(label_name, BASE_DATA + BYTE_COUNTER, &head);
-                    UPDATE_INT(atoi(int_value), head);
-                    BYTE_COUNTER += 4;
+                    BYTE_COUNTER = (BYTE_COUNTER % 4) == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));  // WORD-ALIGNMENT
+                    if(SYMBOL_EXISTS(label_name, head) == -1)
+                        APPEND_SYMBOL(label_name, BASE_DATA + BYTE_COUNTER, &head);
+                    else
+                        UPDATE_ADDRESS(label_name, BYTE_COUNTER, 1, head);
+                    UPDATE_INT(atoi(int_value), head, label_name);
+                    BYTE_COUNTER += 4;                                                                              // INTEGER IS 4 BYTES
                 }
             }
         }
@@ -375,6 +393,7 @@ int main()
                 temp_instruction->rt = REG_NUMBER(first_input);
                 temp_instruction->immediate = second_input[0] == '0' ? HEX_TO_DECIMAL(second_input) & 0xFFFF : -1;
                 strcpy(temp_instruction->target, second_input[0] == '0' ? "\0" : second_input);
+                if(SYMBOL_EXISTS(temp_instruction->target, head) == -1) APPEND_SYMBOL(temp_instruction->target, 0, &head);
             }
 
             else if(symbol[strlen(symbol)-1] == ')' && strcmp(mnemonic, "\0") == 0){
@@ -399,6 +418,7 @@ int main()
                 if(strcmp(macro_type, "print_str") == 0){
                     for(i = i + 1, j = 0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
                     strcpy(temp_instruction->target, first_input);
+                    if(SYMBOL_EXISTS(temp_instruction->target, head) == -1) APPEND_SYMBOL(first_input, 0, &head);
 
                     for(int m = 0; m < 4; m++){
                         InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
@@ -542,6 +562,7 @@ int main()
                             for(i=i+1, j=0; symbol[i]!='\0'; i++, j++)
                             operand[j] = symbol[i];
                             strcpy(temp_instruction->target, operand);
+                            if(SYMBOL_EXISTS(temp_instruction->target, head) == -1) APPEND_SYMBOL(temp_instruction->target, 0, &head);
                             temp_instruction->rt = rd;
                             temp_instruction->rs = REG_NUMBER("$at");
                         }
@@ -630,13 +651,20 @@ int main()
             temp_instruction = RESET_TEMP();
 
             // (3)
-            if(IN_DATA_SEGMENT == 1 && !IS_DATA) ADD_TO_MEMORY(MemoryFile, head);
-
+            //if(IN_DATA_SEGMENT == 1 && !IS_DATA) ADD_TO_MEMORY(MemoryFile, head);
             // (4)
             if(to_break==EOF) break;
             printf("\n[Line %d]", ++LINE_NUMBER); 
         }
     }
+
+    // ADD DATA LABELS TO DATA MEMORY
+    Symbol *temp = head;
+    while(temp){
+        if(temp->address >= BASE_DATA) ADD_TO_MEMORY(MemoryFile, head, temp->name);
+        temp = temp->next;
+    }
+
     PRINT_INSTRUCTIONS(InstructionList, INST_COUNTER);
     PRINT_SYMBOL_TABLE(head, output);
     rewind(output);
@@ -743,7 +771,7 @@ int main()
                 temp->int_value = RegisterFile[InstructionList[line]->rt];
                 temp->address = RegisterFile[InstructionList[line]->rs] + InstructionList[line]->immediate;
                 
-                ADD_TO_MEMORY(MemoryFile, temp);
+                ADD_TO_MEMORY(MemoryFile, temp, "\0");
                 if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
             }
             else { // STORE TO STACK
@@ -806,7 +834,7 @@ int main()
                     printf("test: %d %d\n", strlen(string), RegisterFile[REG_NUMBER("$a1")] - 1);
                     if (strlen(string) < RegisterFile[REG_NUMBER("$a1")] - 1) strcat(string, "\n");
                     strcpy(temp->str_value,string);
-                    ADD_TO_MEMORY(MemoryFile, temp);
+                    ADD_TO_MEMORY(MemoryFile, temp, "\0");
                     if(temp->address + RegisterFile[REG_NUMBER("$a1")] > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address + RegisterFile[REG_NUMBER("$a1")] - BASE_DATA;
                 }
             }
@@ -837,7 +865,9 @@ int main()
             temp->next = NULL;
             if (strlen(string) < InstructionList[line]->rs - 1) strcat(string, "\n");
             strcpy(temp->str_value,string);
-            ADD_TO_MEMORY(MemoryFile, temp);
+            printf("h");
+            ADD_TO_MEMORY(MemoryFile, temp, "\0");
+            printf("h");
             if(temp->address + InstructionList[line]->rs > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address + InstructionList[line]->rs - BASE_DATA;
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
@@ -853,7 +883,7 @@ int main()
             temp->int_value = integer;
             temp->address = InstructionList[line]->immediate;
 
-            ADD_TO_MEMORY(MemoryFile, temp);
+            ADD_TO_MEMORY(MemoryFile, temp, "\0");
             //if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
             // NOT DONE
         }
@@ -1197,6 +1227,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
 }
 
 int HEX_TO_DECIMAL(char *str){
+    // CONVERTS base-16 number to base-10
     int num=0;
     for(int i=2; i<10; i++){
         if(isdigit(str[i]) || str[i] == '0'){
@@ -1209,8 +1240,10 @@ int HEX_TO_DECIMAL(char *str){
     return num;
 }
 
-void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
-    Symbol *data_label = GET_TAIL(SymbolTable);
+void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable, char *symbol_name){
+    // STORES information to the MEMORY
+    Symbol *data_label = GET_LABEL(SymbolTable, symbol_name);
+    printf("%s", data_label->name);
     if(strcmp(data_label->str_value,"\0")!=0) 
         // STORE STRING
         strcpy(MemoryFile + (data_label->address - BASE_DATA), data_label->str_value);
@@ -1223,6 +1256,7 @@ void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable){
 }
 
 int LOAD_INT(char MemoryFile[], int address){
+    // LOADS integer from Data Segment given an ADDRESS
     int value = 0;
     for(int idx = address - BASE_DATA, i=0; i<4; idx++, i++)
         value += ((int) MemoryFile[idx] << 8*(3-i));
@@ -1230,15 +1264,18 @@ int LOAD_INT(char MemoryFile[], int address){
 }
 
 char* LOAD_STRING(char MemoryFile[], int address){
+    // LOADS string from Data Segment given an ADDRESS
     return MemoryFile + (address-BASE_DATA);
 }
 
 void PRINT_REGISTER_FILE(int RegisterFile[]){
+    // PRINTS the 32 Registers
     for (int regnum = 0; regnum < 32; regnum++)
         printf("[%-3s | %02d]  Value: 0x%08X / %-10d\n", REG_NAME(regnum), regnum, RegisterFile[regnum], RegisterFile[regnum]);
 }
 
 void PRINT_STACK_MEMORY(StackNode *StackPointer){
+    // PRINTS the Stack Memory
     if(StackPointer == NULL){
         printf("Stack memory is empty...");
         return;
@@ -1251,6 +1288,7 @@ void PRINT_STACK_MEMORY(StackNode *StackPointer){
 }
 
 void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
+    // PRINTS the Data Memory
     int total = (((int)(BYTE_COUNTER/4))+1)*4;
 
     printf("\n\nMemory Array\n");
@@ -1267,6 +1305,7 @@ void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
 }
 
 void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N){
+    // PRINTS the List of Instructions
     printf("\n\nScanned the following instructions...\n");
     for(int i = 0; i < N; i++)
     {
@@ -1284,6 +1323,7 @@ void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N){
 }
 
 void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output){
+    // PRINTS the Symbol Table
     printf("\nSymbol Table:\n");
     Symbol *temp = head;
     while(temp){
@@ -1296,6 +1336,7 @@ void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output){
 }
 
 void PRINT_DATA_SEGMENT(Symbol *head){
+    // PRINTS Data Segment Labels
     printf("\n\nData Segment Labels:\n");
     Symbol *temp = head;
     int printed=0;
@@ -1344,7 +1385,6 @@ Instruction* RESET_TEMP(){
     temp->immediate = -1;
     return temp;
 }
-
 
 int IS_PSEUDO(char mnem[]){
     // check if mnemonic of instruction is pseudoinstruction
@@ -1411,13 +1451,21 @@ Symbol *GET_TAIL(Symbol *head){
     return temp;
 }
 
-void UPDATE_STR(char str_value[], Symbol *head){
+Symbol *GET_LABEL(Symbol *head, char *symbol_name){
+    Symbol *temp = head;
+    while(temp){
+        if(strcmp(symbol_name,temp->name)==0) return temp;
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+void UPDATE_STR(char str_value[], Symbol *head, char *symbol_name){
     /*
     Update str_value field of SYMBOL in Data Segment
     => the last appended symbol in the table corresponds to the symbol to be updated
     */
-    Symbol *temp = head;
-    while(temp->next != NULL) temp = temp->next;
+    Symbol *temp = GET_LABEL(head, symbol_name);
     if(strlen(temp->str_value) == 0) 
         // new 
         strcpy(temp->str_value,str_value);
@@ -1426,32 +1474,21 @@ void UPDATE_STR(char str_value[], Symbol *head){
         strcat(temp->str_value," ");
         strcat(temp->str_value, str_value);
     }
-
-    return;
 }
 
-void UPDATE_INT(int int_value, Symbol *head){
+void UPDATE_INT(int int_value, Symbol *head, char *symbol_name){
     /*
     Update str_value field of SYMBOL in Data Segment
     => the last appended symbol in the table corresponds to the symbol to be updated
     */
-    Symbol *temp = head;
-    while(temp->next != NULL) temp = temp->next;
+    Symbol *temp = GET_LABEL(head, symbol_name);
     temp->int_value = int_value;
-    return;
 }
 
 void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head){
     // update address of symbol that was already encountered
-    Symbol *temp = head;
-    while(1){
-        if(strcmp(symbol_name, temp->name)==0){
-            // offset for label in data segment is already in bytes
-            temp->address = in_data ? BASE_DATA + diff : BASE_TEXT + diff*4;
-            return;
-        }
-        temp = temp->next;
-    }
+    Symbol *temp = GET_LABEL(head, symbol_name);
+    temp->address = in_data ? BASE_DATA + diff : BASE_TEXT + diff*4;
 }
 
 int SYMBOL_EXISTS(char symbol_name[], Symbol *head){
