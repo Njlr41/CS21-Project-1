@@ -1,2 +1,3 @@
-test	0x10000000
-msg1	0x1000000D
+leonard	0x00400004
+sturgis	0x00400018
+cooper	0x0040001C

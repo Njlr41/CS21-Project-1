@@ -464,8 +464,8 @@ int main()
                         char operand[5] = {};
                         int i = 0, j = 0;
                         
-                        strcpy(temp_instruction->mnemonic,"addu");
-                        strcpy(mnemonic,"addu");
+                        strcpy(temp_instruction->mnemonic,"add");
+                        strcpy(mnemonic,"add");
                         for(; symbol[i]!=','; i++, j++){
                         operand[j] = symbol[i];
                         }
