@@ -1,7 +1,0 @@
-11123123
-.text
-read_integer(name)
-print_integer(name)
-exit()
-.data
-allocate_bytes(name,1)

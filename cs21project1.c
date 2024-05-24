@@ -77,9 +77,9 @@ void STACK_DEALLOCATE(StackNode** sp);
 
 int main()
 {
-    FILE *fp = fopen("sample_input.txt", "r");     // read file
-    FILE *output = fopen("output.txt", "w+"); // write file
-    FILE *machinecode = fopen("machinecode.txt", "w"); // write file
+    FILE *fp = fopen("mips.txt", "r");     // read file
+    FILE *output = fopen("symboltable.txt", "w+"); // write file
+    FILE *machinecode = fopen("execute.txt", "w"); // write file
 
     if(fp == NULL){
         printf("Error");
