@@ -121,6 +121,10 @@ int main()
             IN_DATA_SEGMENT = 0;
             printf("=> text segment");
         }
+        else if(strcmp(symbol,".include")==0 || strcmp(symbol, "\"macros.asm\"") == 0){
+            IN_DATA_SEGMENT = 0;
+            printf("=> include");
+        }
         else if(strcmp(symbol,".data")==0){
             /*
             FIRST PASS already reached the DATA segment
@@ -794,7 +798,7 @@ int main()
                 if (RegisterFile[REG_NUMBER("$a1")] <= 1) continue;
                 else{
                     char string[RegisterFile[REG_NUMBER("$a1")]];
-                    scanf("%s", &string);
+                    scanf("%[^\n]s", &string);
                     string[RegisterFile[REG_NUMBER("$a1")] - 1] = '\0';
                     Symbol* temp = (Symbol*)malloc(sizeof(Symbol));
                     temp->address = RegisterFile[REG_NUMBER("$a0")];
@@ -826,7 +830,7 @@ int main()
         }
         else if (strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
             char string[InstructionList[line]->rs];
-            scanf("%s", &string);
+            scanf("%[^\n]s", &string);
             string[InstructionList[line]->rs - 1] = '\0';
             Symbol* temp = (Symbol*)malloc(sizeof(Symbol));
             temp->address = InstructionList[line]->immediate;
@@ -1226,7 +1230,7 @@ int LOAD_INT(char MemoryFile[], int address){
 }
 
 char* LOAD_STRING(char MemoryFile[], int address){
-    return MemoryFile + (BASE_DATA-address);
+    return MemoryFile + (address-BASE_DATA);
 }
 
 void PRINT_REGISTER_FILE(int RegisterFile[]){
