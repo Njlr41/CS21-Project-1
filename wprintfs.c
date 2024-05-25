@@ -1373,7 +1373,6 @@ void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output){
     printf("\nSymbol Table:\n");
     Symbol *temp = head;
     while(temp){
-        printf("[%-5s 0x%08X]", temp->name, temp->address);
         fprintf(output, "%s\t0x%08X", temp->name, temp->address); // write output to output.txt
         if(temp->next) printf("\n");
         if(temp->next) fprintf(output,"\n"); // write output to output.txt

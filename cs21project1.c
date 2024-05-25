@@ -43,6 +43,7 @@ void APPEND_SYMBOL(char symbol_name[], int address_val, Symbol **head);
 void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head);
 void UPDATE_STR(char str_value[], Symbol *head, char *symbol_name);
 void UPDATE_INT(int int_value, Symbol *head, char *symbol_name);
+void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
 
 // CHECKERS
 int IS_PSEUDO(char mnem[]);
@@ -637,6 +638,7 @@ int main()
         temp = temp->next;
     }
 
+    PRINT_SYMBOL_TABLE(head, output);
     GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
     printf("Assemble: operation completed successfully.\n");
     
@@ -1216,7 +1218,6 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
         }
         
         machine_code_string = GET_BINARY(machine_code);
-        fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
         fprintf(machinecode, "%s\n", machine_code_string);
     }
 }
@@ -1263,6 +1264,16 @@ int LOAD_INT(char MemoryFile[], int address){
 char* LOAD_STRING(char MemoryFile[], int address){
     // LOADS string from Data Segment given an ADDRESS
     return MemoryFile + (address-BASE_DATA);
+}
+
+void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output){
+    // PRINTS the Symbol Table
+    Symbol *temp = head;
+    while(temp){
+        fprintf(output, "%s\t0x%08X", temp->name, temp->address); // write output to output.txt
+        if(temp->next) fprintf(output,"\n"); // write output to output.txt
+        temp = temp->next;
+    }
 }
 
 Instruction* CREATE_INSTRUCTION(Instruction *temp){

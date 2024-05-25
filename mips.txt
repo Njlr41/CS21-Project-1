@@ -1,22 +1,12 @@
-19
+17
 .text
-li $t1,3
-print_str(jumping)
-j skip
-li $t0,10
-skip: add $t0,$t1,$t0
-move $a0,$t0
-li $v0,1
-syscall
-jal return
-j end
-li $t5,123
-return: li $t5,555
-jr $ra
-end: move $a0,$t5
-li $v0,1
-syscall
+lw $a0,a
+lw $a1,b
+GCD()
+beq $a0,$a1,equal
+equal: li $v1,1000
 li $v0,10
 syscall
 .data
-jumping: .asciiz "Jumping Jacks Everyday"
+a: .word 2
+b: .word 2
