@@ -1293,6 +1293,8 @@ void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable, char *symbol_name){
     else{ 
         // STORE INTEGER
         for(int i=0; i<4; i++){
+            printf("shift %d:", (32-(((i+1))*8)));
+            printf("%X ",0xFF & data_label->int_value >> (32-(((i+1))*8)));
             MemoryFile[data_label->address - BASE_DATA + i] = 
             data_label->int_value >> (32-(((i+1))*8));
         }
@@ -1303,7 +1305,7 @@ int LOAD_INT(char MemoryFile[], int address){
     // LOADS integer from Data Segment given an ADDRESS
     int value = 0;
     for(int idx = address - BASE_DATA, i=0; i<4; idx++, i++)
-        value += ((int) MemoryFile[idx] << 8*(3-i));
+        value += (((int) MemoryFile[idx] & 0xFF) << 8*(3-i));
     return value;
 }
 
@@ -1337,7 +1339,7 @@ void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
 
     printf("\n\nMemory Array\n");
     for(int i=0; i<total/4; i++){
-        for(int j=0; j<4; j++) printf("| %02X %c", MemoryFile[4*i+j], j==3 ? '|' : '\0');
+        for(int j=0; j<4; j++) printf("| %02X %c", MemoryFile[4*i+j] & 0xFF, j==3 ? '|' : '\0');
         printf("\n");
     }
 
