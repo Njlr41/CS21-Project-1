@@ -210,7 +210,7 @@ int main()
                 (2) Update INT_VALUE of LABEL
                 (3) Increment BYTE_COUNTER by 4 (size of an integer is 4 bytes)
                 */
-                Symbol *tail = GET_TAIL(head);
+                Symbol *tail = GET_LABEL(head,temp_label);
                 UPDATE_INT(atoi(symbol), head, tail->name);
                 BYTE_COUNTER = BYTE_COUNTER % 4 == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));
                 UPDATE_ADDRESS(tail->name, BYTE_COUNTER, 1, head);
@@ -300,7 +300,8 @@ int main()
                 symbol[strlen(symbol)-1] = '\0';
                 if(SYMBOL_EXISTS(symbol, head) != -1) UPDATE_ADDRESS(symbol, INST_COUNTER, 0, head);
                 else APPEND_SYMBOL(symbol, BASE_TEXT + (INST_COUNTER*4), &head);
-
+                Symbol *temp = GET_TAIL(head);
+                printf("%X %X", SYMBOL_EXISTS(symbol, head), temp->address);
                 printf("=> label");
             }
 
@@ -659,8 +660,10 @@ int main()
             // (3)
             //if(IN_DATA_SEGMENT == 1 && !IS_DATA) ADD_TO_MEMORY(MemoryFile, head);
             // (4)
+            PRINT_SYMBOL_TABLE(head,output);
             if(to_break==EOF) break;
-            printf("\n[Line %d]", ++LINE_NUMBER); 
+            printf("\n[Line %d]", ++LINE_NUMBER);
+
         }
     }
 
