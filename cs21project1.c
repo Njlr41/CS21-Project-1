@@ -1001,13 +1001,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = (15361 << 16) + upper;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = (13348 << 16) + lower;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // LOAD IMMEDIATE
@@ -1015,13 +1013,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = 0b00111100000000010000000000000000;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = 0b00110100001000100000000000000100;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // SYSCALL
@@ -1053,13 +1049,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = (0b0011110000000001 << 16) + upper;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = (0b0011010000100100 << 16) + lower;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // LOAD IMMEDIATE
@@ -1069,13 +1063,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMEDIATE
                 machine_code = (0b0011110000000001 << 16) + upper;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = (0b0011010000100101 << 16) + lower;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // LOAD IMMEDIATE
@@ -1083,13 +1075,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = 0b00111100000000010000000000000000;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = 0b00110100001000100000000000001000;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // SYSCALL
@@ -1117,13 +1107,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = (15361 << 16) + upper;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = (13348 << 16) + lower;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // LOAD IMMEDIATE
@@ -1131,13 +1119,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = 0b00111100000000010000000000000000;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = 0b00110100001000100000000000000001;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // SYSCALL
@@ -1161,13 +1147,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = (15361 << 16) + upper;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = (13348 << 16) + lower;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // LOAD IMMEDIATE
@@ -1175,13 +1159,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = 0b00111100000000010000000000000000;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = 0b00110100001000100000000000000101;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // SYSCALL
@@ -1202,13 +1184,11 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 // -- LOAD UPPER IMMEDIATE
                 machine_code = 0b00111100000000010000000000000000;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
 
                 // -- OR IMMEDIATE
                 machine_code = 0b00110100001000100000000000001010;
                 machine_code_string = GET_BINARY(machine_code);
-                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // SYSCALL

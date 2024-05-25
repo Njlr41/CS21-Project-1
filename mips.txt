@@ -1,30 +1,22 @@
-29
+19
 .text
-print_str(one)
-read_integer(a)
-print_str(two)
-read_integer(b)
-lw $a0,a
-lw $a1,b
-print_str(output)
-GCD()
-beq $a0,$a1,equal
-li $a0,10
-li $v0,11
+li $t1,3
+j skip
+li $t0,10
+skip: add $t0,$t1,$t0
+move $a0,$t0
+li $v0,1
 syscall
-print_str(neq)
+jal return
 j end
-equal: li $a0,10
-li $v0,11
+li $t5,123
+return: li $t5,555
+jr $ra
+end: move $a0,$t5
+li $v0,1
 syscall
-print_str(eq)
-end: li $v0,10
+print_str(jumping)
+li $v0,10
 syscall
 .data
-a: .word 1
-b: .word 1
-output: .asciiz "The GCD is: "
-allocate_str(one,"Input 1: ")
-allocate_str(two,"Input 2: ")
-allocate_str(eq,"The two inputs were equal.")
-allocate_str(neq,"The two inputs were NOT equal.")
+jumping: .asciiz "Jumping Jacks Everyday"
