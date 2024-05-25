@@ -1,12 +1,24 @@
-17
+23
 .text
+print_str(one)
+read_integer(a)
+print_str(two)
+read_integer(b)
 lw $a0,a
 lw $a1,b
+print_str(output)
 GCD()
 beq $a0,$a1,equal
-equal: li $v1,1000
-li $v0,10
+print_str(neq)
+j end
+equal: print_str(eq)
+end: li $v0,10
 syscall
 .data
-a: .word 2
-b: .word 2
+a: .word 1
+b: .word 1
+output: .asciiz "The GCD is: "
+allocate_str(one,"Input 1: ")
+allocate_str(two,"Input 2: ")
+allocate_str(eq,"The two inputs were equal.")
+allocate_str(neq,"The two inputs were NOT equal.")

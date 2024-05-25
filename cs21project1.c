@@ -282,7 +282,6 @@ int main()
                 symbol[strlen(symbol)-1] = '\0';
                 if(SYMBOL_EXISTS(symbol, head) != -1) UPDATE_ADDRESS(symbol, INST_COUNTER, 0, head);
                 else APPEND_SYMBOL(symbol, BASE_TEXT + (INST_COUNTER*4), &head);
-                printf("%d", INST_COUNTER);
             }
 
             else if(c != '\n' && strcmp(mnemonic,"\0")==0){ 
@@ -752,13 +751,13 @@ int main()
         }
         else if (strcmp(InstructionList[line]->mnemonic, "beq") == 0){
             if(RegisterFile[InstructionList[line]->rs] == RegisterFile[InstructionList[line]->rt]){
-                line += 1 + InstructionList[line]->immediate;
+                line += InstructionList[line]->immediate;
                 continue;
             }
         }
         else if (strcmp(InstructionList[line]->mnemonic, "bne") == 0){
             if(RegisterFile[InstructionList[line]->rs] != RegisterFile[InstructionList[line]->rt]) {
-                line += 1 + InstructionList[line]->immediate;
+                line += InstructionList[line]->immediate;
                 continue;
             }
         }
