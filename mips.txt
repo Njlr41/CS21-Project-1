@@ -1,6 +1,7 @@
 19
 .text
 li $t1,3
+print_str(jumping)
 j skip
 li $t0,10
 skip: add $t0,$t1,$t0
@@ -15,7 +16,6 @@ jr $ra
 end: move $a0,$t5
 li $v0,1
 syscall
-print_str(jumping)
 li $v0,10
 syscall
 .data

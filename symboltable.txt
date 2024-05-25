@@ -1,4 +1,0 @@
-skip	0x00400014
-return	0x00400038
-end	0x00400044
-jumping	0x10000000

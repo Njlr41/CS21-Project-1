@@ -44,12 +44,6 @@ void UPDATE_ADDRESS(char symbol_name[], int diff, int in_data, Symbol *head);
 void UPDATE_STR(char str_value[], Symbol *head, char *symbol_name);
 void UPDATE_INT(int int_value, Symbol *head, char *symbol_name);
 
-// DISPLAY
-void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER);
-void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N_LINES);
-void PRINT_DATA_SEGMENT(Symbol *head);
-void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output);
-
 // CHECKERS
 int IS_PSEUDO(char mnem[]);
 int IS_MACRO(char mnem[]);
@@ -109,19 +103,16 @@ int main()
     Instruction *InstructionList[1000];
     int INST_COUNTER = 0;
 
-    printf("[Line 1]");
     fscanf(fp, "%s%c", &symbol, &c);
 
     // FIRST PASS
     while(1){
-        printf("\n%30s %2d ", symbol, c);
         if(strcmp(symbol,".text")==0){
             /*
             FIRST PASS already reached the TEXT gment
             (1) Update IN_DATA_SEGMENT to 0
             */
             IN_DATA_SEGMENT = 0;
-            printf("=> text segment");
         }
         else if(strcmp(symbol,".include")==0 || strcmp(symbol, "\"macros.asm\"") == 0){
             /*
@@ -129,7 +120,6 @@ int main()
             -- ignore
             */
             IN_DATA_SEGMENT = 0;
-            printf("=> include");
         }
         else if(strcmp(symbol,".data")==0){
             /*
@@ -137,7 +127,6 @@ int main()
             (1) Update IN_DATA_SEGMENT to 1
             */
             IN_DATA_SEGMENT = 1;
-            printf("=> data segment");
         }
         else if(IN_DATA_SEGMENT==1){ // DATA SEGMENT
             if (symbol[strlen(symbol)-1] == ':' && 
@@ -160,7 +149,6 @@ int main()
                 else
                     APPEND_SYMBOL(symbol, BASE_DATA + BYTE_COUNTER, &head);
                 strcpy(temp_label, symbol);
-                printf("=> label");
             }
             else if(symbol[0] == '.'){
                 /*
@@ -169,7 +157,6 @@ int main()
                 -- either .asciiz or .word
                 */
                 strcpy(mnemonic,symbol);
-                printf("=> allocation (%s)",mnemonic);
             }
             else if (strcmp(mnemonic,".asciiz")==0 || strcmp(mnemonic,"allocate_str")==0){
                 /*
@@ -200,8 +187,6 @@ int main()
                     UPDATE_STR(symbol+1, head, temp_label);             // remove opening "
                 else
                     UPDATE_STR(symbol, head, temp_label);
-                
-                printf("=> string");
             }
             else if(strcmp(mnemonic,".word")==0){ 
                 /*
@@ -215,7 +200,6 @@ int main()
                 BYTE_COUNTER = BYTE_COUNTER % 4 == 0 ? BYTE_COUNTER : BYTE_COUNTER + (4-(BYTE_COUNTER % 4));
                 UPDATE_ADDRESS(tail->name, BYTE_COUNTER, 1, head);
                 BYTE_COUNTER+=4;
-                printf("=> int");
             }
             else {
                 /*
@@ -243,7 +227,6 @@ int main()
                 (5) Update INT_VALUE of LABEL
                 (6) Update BYTE_COUNTER by 4 (size of integer is 4 bytes) 
                 */
-                printf("=> macro");
                 if(symbol[9]=='s'){ 
                     // ALLOCATE_STR
                     strcpy(mnemonic, "allocate_str");
@@ -252,9 +235,7 @@ int main()
 
                     for(; symbol[i] != ','; i++, j++)
                         label_name[j] = symbol[i];
-                    printf("e");
                     strcpy(temp_label, label_name);
-                    printf("e");
                     for(i=i+2, j=0; symbol[i] != '"' && symbol[i] != '\0'; i++, j++)
                         str_value[j] = symbol[i];
                     
@@ -300,8 +281,6 @@ int main()
                 symbol[strlen(symbol)-1] = '\0';
                 if(SYMBOL_EXISTS(symbol, head) != -1) UPDATE_ADDRESS(symbol, INST_COUNTER, 0, head);
                 else APPEND_SYMBOL(symbol, BASE_TEXT + (INST_COUNTER*4), &head);
-
-                printf("=> label");
             }
 
             else if(c != '\n' && strcmp(mnemonic,"\0")==0){ 
@@ -314,7 +293,6 @@ int main()
                 */
                 strcpy(mnemonic, symbol);
                 strcpy(temp_instruction->mnemonic, symbol);
-                printf("=> mnemonic");
             }
 
             else if(strcmp(symbol, "syscall")==0){
@@ -323,7 +301,6 @@ int main()
                 (1) Update MNEMONIC field of temp_instruction
                 */
                 strcpy(temp_instruction->mnemonic, symbol);
-                printf("=> syscall");
             }
 
             // PSEUDO INSTRUCTIONS
@@ -333,7 +310,6 @@ int main()
                 -- lui $at,0x00001234
                 -- ori $(target),$at,0x00005678
                 */ 
-                printf("=> operand");
                 char first_input[100] = {};
                 char second_input[100] = {};
                 int j = 0, i = 0;
@@ -366,7 +342,6 @@ int main()
                 -- lui $at,<upper 16 bits>
                 -- ori rt,$at,<lower 16 bits>
                 */
-                printf("=> operand");
                 char first_input[100] = {};
                 char second_input[100] = {};
                 char third_input[100] = {};
@@ -464,10 +439,6 @@ int main()
                         temp_instruction = RESET_TEMP();
                         strcpy(temp_instruction->mnemonic, "macro");
                     }
-                }
-                // ERROR CHECK
-                else{
-                printf("ERROR IN MACRO READ");
                 }
             }
             
@@ -591,7 +562,6 @@ int main()
 
                         if(SYMBOL_EXISTS(symbol+(i+1), head) == -1) APPEND_SYMBOL(symbol+(i+1), 0, &head);
                         strcpy(temp_instruction->target, symbol+(i+1));
-                        printf("%s", temp_instruction->target);
                     } 
 
                     // addi, addiu
@@ -618,11 +588,8 @@ int main()
                     else {
                         if(SYMBOL_EXISTS(symbol, head) == -1) APPEND_SYMBOL(symbol, 0, &head);
                         strcpy(temp_instruction->target, symbol);
-                        printf("%s",temp_instruction->target);
                     }
                 }
-
-                printf("=> %s",IS_JTYPE(mnemonic) ? "label" : "operand");
             }
         }
 
@@ -660,7 +627,6 @@ int main()
             //if(IN_DATA_SEGMENT == 1 && !IS_DATA) ADD_TO_MEMORY(MemoryFile, head);
             // (4)
             if(to_break==EOF) break;
-            printf("\n[Line %d]", ++LINE_NUMBER); 
         }
     }
 
@@ -671,17 +637,11 @@ int main()
         temp = temp->next;
     }
 
-    PRINT_INSTRUCTIONS(InstructionList, INST_COUNTER);
-    PRINT_SYMBOL_TABLE(head, output);
-    rewind(output);
-    PRINT_DATA_SEGMENT(head);
-    PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
     GENERATE_MACHINE_CODE(machinecode, InstructionList, INST_COUNTER, head);
     printf("Assemble: operation completed successfully.\n");
     
     // Execution
     for (int line = 0; line < INST_COUNTER; line++){
-        printf("[%d] %s\n", line, InstructionList[line]->mnemonic);
         if (strcmp(InstructionList[line]->mnemonic, "macro") == 0) continue;
 
         // R-Types
@@ -871,9 +831,7 @@ int main()
             temp->next = NULL;
             if (strlen(string) < InstructionList[line]->rs - 1) strcat(string, "\n");
             strcpy(temp->str_value,string);
-            printf("h");
             ADD_TO_MEMORY(MemoryFile, temp, "\0");
-            printf("h");
             if(temp->address + InstructionList[line]->rs > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address + InstructionList[line]->rs - BASE_DATA;
         }
         else if (strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
@@ -891,14 +849,9 @@ int main()
 
             ADD_TO_MEMORY(MemoryFile, temp, "\0");
             //if(temp->address > (BASE_DATA + BYTE_COUNTER)) BYTE_COUNTER = temp->address - BASE_DATA;
-            // NOT DONE
         }
         else if (strcmp(InstructionList[line]->mnemonic, "exit") == 0) break;
     }
-    
-    PRINT_REGISTER_FILE(RegisterFile);
-    PRINT_MEMORY(MemoryFile, BYTE_COUNTER);
-    //PRINT_STACK_MEMORY(StackPointer);
     return 0;
 }
 
@@ -1293,8 +1246,6 @@ void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable, char *symbol_name){
     else{ 
         // STORE INTEGER
         for(int i=0; i<4; i++){
-            printf("shift %d:", (32-(((i+1))*8)));
-            printf("%X ",0xFF & data_label->int_value >> (32-(((i+1))*8)));
             MemoryFile[data_label->address - BASE_DATA + i] = 
             data_label->int_value >> (32-(((i+1))*8));
         }
@@ -1312,102 +1263,6 @@ int LOAD_INT(char MemoryFile[], int address){
 char* LOAD_STRING(char MemoryFile[], int address){
     // LOADS string from Data Segment given an ADDRESS
     return MemoryFile + (address-BASE_DATA);
-}
-
-void PRINT_REGISTER_FILE(int RegisterFile[]){
-    // PRINTS the 32 Registers
-    for (int regnum = 0; regnum < 32; regnum++)
-        printf("[%-3s | %02d]  Value: 0x%08X / %-10d\n", REG_NAME(regnum), regnum, RegisterFile[regnum], RegisterFile[regnum]);
-}
-
-void PRINT_STACK_MEMORY(StackNode *StackPointer){
-    // PRINTS the Stack Memory
-    if(StackPointer == NULL){
-        printf("Stack memory is empty...");
-        return;
-    }
-
-    while (StackPointer->prev != NULL) {
-        printf("%d\n", StackPointer->data);
-        StackPointer = StackPointer->prev;
-    }
-}
-
-void PRINT_MEMORY(char MemoryFile[], int BYTE_COUNTER){
-    // PRINTS the Data Memory
-    int total = (((int)(BYTE_COUNTER/4))+1)*4;
-
-    printf("\n\nMemory Array\n");
-    for(int i=0; i<total/4; i++){
-        for(int j=0; j<4; j++) printf("| %02X %c", MemoryFile[4*i+j] & 0xFF, j==3 ? '|' : '\0');
-        printf("\n");
-    }
-
-    printf("\nASCII\n");
-    for(int i=0; i<total/4; i++){
-        for(int j=0; j<4; j++) printf("| %c %c", MemoryFile[4*i+j] == '\0' ? ' ' : MemoryFile[4*i+j], j==3 ? '|' : '\0');
-        printf("\n");
-    }
-}
-
-void PRINT_INSTRUCTIONS(Instruction *InstructionList[], int N){
-    // PRINTS the List of Instructions
-    printf("\n\nScanned the following instructions...\n");
-    for(int i = 0; i < N; i++)
-    {
-        Instruction *inst = InstructionList[i];
-        if (strcmp(inst->mnemonic,"\0")) {
-            printf("[%d] %s ", i+1,(InstructionList[i])->mnemonic);
-            if(inst->rd != -1) printf("[rd: %d] ", inst->rd);
-            if(inst->rt != -1) printf("[rt: %d] ", inst->rt);
-            if(inst->rs != -1) printf("[rs: %d] ", inst->rs);
-            if((IS_ITYPE(inst->mnemonic) && inst->mnemonic[0]!='b') || IS_PSEUDO(inst->mnemonic)) printf("[imm: %d] ", inst->immediate);
-            if(strcmp(inst->target,"\0")!=0) printf("[target: %s] ", inst->target);
-            printf("\n");
-        }
-    }
-}
-
-void PRINT_SYMBOL_TABLE(Symbol *head, FILE *output){
-    // PRINTS the Symbol Table
-    printf("\nSymbol Table:\n");
-    Symbol *temp = head;
-    while(temp){
-        printf("[%-5s 0x%08X]", temp->name, temp->address);
-        fprintf(output, "%s\t0x%08X", temp->name, temp->address); // write output to output.txt
-        if(temp->next) printf("\n");
-        if(temp->next) fprintf(output,"\n"); // write output to output.txt
-        temp = temp->next;
-    }
-}
-
-void PRINT_DATA_SEGMENT(Symbol *head){
-    // PRINTS Data Segment Labels
-    printf("\n\nData Segment Labels:\n");
-    Symbol *temp = head;
-    int printed=0;
-    while(temp){
-        if(strlen(temp->str_value)!=0){
-            if(printed==0){
-                printf("| %-5s | %-20s | %10s |\n", "Label", "Content", "Address");
-                for(int k=0; k<45; k++) printf("-");
-                printf("\n");
-                printed=1;
-            }
-            printf("| %-5s | %-20s | 0x%08X |", temp->name, temp->str_value, temp->address);
-        }
-        else if(temp->address >= BASE_DATA){
-            if(printed==0){
-                printf("| %-5s | %-20s | %10s |\n", "Label", "Content", "Address");
-                for(int k=0; k<45; k++) printf("-");
-                printf("\n");
-                printed=1;
-            }
-            printf("| %-5s | %-20d | 0x%08X |", temp->name, temp->int_value, temp->address);
-        }
-        if(temp->next && printed) printf("\n");
-        temp = temp->next;
-    }
 }
 
 Instruction* CREATE_INSTRUCTION(Instruction *temp){
