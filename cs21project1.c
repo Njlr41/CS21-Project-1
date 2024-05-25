@@ -108,7 +108,7 @@ int main()
     Instruction *temp_instruction = RESET_TEMP();
     Instruction *InstructionList[1000];
     int INST_COUNTER = 0;
-    
+
     printf("[Line 1]");
     fscanf(fp, "%s%c", &symbol, &c);
 
@@ -513,7 +513,7 @@ int main()
                         operand[j] = symbol[i];
                         temp_instruction->rd = REG_NUMBER(operand);
                         
-                        strcpy(operand,"\0"); // reset operand
+                        memset(operand, 0, sizeof(operand));  // reset operand
 
                         for(i=i+1, j=0; symbol[i]!=','; i++, j++)
                         operand[j] = symbol[i];
@@ -532,7 +532,7 @@ int main()
                             operand[j] = symbol[i];
                         temp_instruction->rt = REG_NUMBER(operand);
 
-                        strcpy(operand,"\0"); // reset reg_name
+                        memset(operand, 0, sizeof(operand)); // reset reg_name
 
                         if(isdigit(symbol[i+1]) || symbol[i+1]=='('){ // imm($rs) or ($rs)
                             for(i=i+1, j=0; symbol[i]!='\0' && symbol[i]!='('; i++, j++)
@@ -541,7 +541,7 @@ int main()
 
                             // lw, sw
                             if(mnemonic[1] == 'w'){ // store to rs
-                                strcpy(operand,"\0");
+                                memset(operand, 0, sizeof(operand)); 
                                 for(i=i+1, j=0; symbol[i]!=')'; i++, j++)
                                     operand[j] = symbol[i];
                                 temp_instruction->rs = REG_NUMBER(operand);
@@ -583,7 +583,7 @@ int main()
                         operand[j] = symbol[i];
                         temp_instruction->rs = REG_NUMBER(operand);
                         
-                        strcpy(operand,"\0"); // reset operand
+                        memset(operand, 0, sizeof(operand)); // reset operand
 
                         for(i=i+1, j=0; symbol[i]!=','; i++, j++)
                         operand[j] = symbol[i];
@@ -603,7 +603,7 @@ int main()
                         operand[j] = symbol[i];
                         temp_instruction->rt = REG_NUMBER(operand);
                         
-                        strcpy(operand,"\0"); // reset operand
+                        memset(operand, 0, sizeof(operand));  // reset operand
 
                         for(i=i+1, j=0; symbol[i]!=','; i++, j++)
                         operand[j] = symbol[i];
@@ -802,17 +802,17 @@ int main()
 
         // JUMPS
         else if (strcmp(InstructionList[line]->mnemonic, "j") == 0){
-            line = (InstructionList[line]->immediate - BASE_TEXT)/4;
+            line = ((InstructionList[line]->immediate - BASE_TEXT)/4) - 1;
             continue;
         }
         else if (strcmp(InstructionList[line]->mnemonic, "jal") == 0){
             // store PC+4 to $ra
             RegisterFile[REG_NUMBER("$ra")] = BASE_TEXT + 4*(line+1);
-            line = (InstructionList[line]->immediate - BASE_TEXT)/4;
+            line = ((InstructionList[line]->immediate - BASE_TEXT)/4) - 1;
             continue;
         }
         else if (strcmp(InstructionList[line]->mnemonic, "jr") == 0){
-            line = (RegisterFile[InstructionList[line]->rs] - BASE_TEXT)/4;
+            line = ((RegisterFile[InstructionList[line]->rs] - BASE_TEXT))/4 - 1;
             continue;
         }
         // Syscall
