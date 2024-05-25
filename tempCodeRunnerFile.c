@@ -1,1 +1,1 @@
-beq
+STACK
