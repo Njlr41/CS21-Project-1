@@ -973,7 +973,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                     machine_code = (3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
                 else
                     InstructionList[line]->immediate = SYMBOL_EXISTS(InstructionList[line]->target,head);
-                machine_code = (3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
+                    machine_code = (3 << 26) | ((InstructionList[line]->immediate << 4) >> 6);
             }
         }
 
