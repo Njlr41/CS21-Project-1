@@ -457,7 +457,13 @@ int main()
                 else if(strcmp(macro_type, "read_integer") == 0){
                     for(i=i+1, j=0; symbol[i] != ')'; i++, j++) first_input[j] = symbol[i];
                     strcpy(temp_instruction->target, first_input);
-                    //NOT DONE
+
+                    for(int m = 0; m < 4; m++){
+                        InstructionList[INST_COUNTER++] = CREATE_INSTRUCTION(temp_instruction);
+                        free(temp_instruction);  
+                        temp_instruction = RESET_TEMP();
+                        strcpy(temp_instruction->mnemonic, "macro");
+                    }
                 }
                 // ERROR CHECK
                 else{
@@ -1071,12 +1077,12 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
             else if(strcmp(InstructionList[line]->mnemonic, "read_str") == 0){
                 /*
                 DECOMPOSES TO:
-                -- la $a0, %label               (label address: 0x12345678)
+                -- la $a0, %label              (label address: 0x12345678)
                     | lui $at,0x00001234       (001111 00000 00001 XXXXXXXXXXXXXXXX)
                     | ori $a0,$at,0x00005678   (001101 00001 00100 XXXXXXXXXXXXXXXX)
-                -- li $a1, 0x12345678           
-                    | lui $at,0x00001234       (001111 00000 00001 XXXXXXXXXXXXXXXX)
-                    | ori $a1,$at,0x00005678   (001101 00001 00101 XXXXXXXXXXXXXXXX)
+                -- li $a1, immediate           (immediate: 0xAAAABBBB)
+                    | lui $at,0x0000AAAA       (001111 00000 00001 XXXXXXXXXXXXXXXX)
+                    | ori $a1,$at,0x0000BBBB   (001101 00001 00101 XXXXXXXXXXXXXXXX)
                 -- li $v0, 8
                     | lui $at,0x00000000       (001111 00000 00001 0000000000000000)
                     | ori $v0,$at,0x00000008   (001101 00001 00010 0000000000001000)
@@ -1103,8 +1109,8 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 fprintf(machinecode, "%0*s\n", 32, machine_code_string);
                 
                 // LOAD IMMEDIATE
-                upper = InstructionList[line]->immediate >> 16;
-                lower = InstructionList[line]->immediate & 0xFFFF;
+                upper = InstructionList[line]->rs >> 16;
+                lower = InstructionList[line]->rs & 0xFFFF;
 
                 // -- LOAD UPPER IMEDIATE
                 machine_code = (0b0011110000000001 << 16) + upper;
@@ -1138,7 +1144,7 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
             else if(strcmp(InstructionList[line]->mnemonic, "print_integer") == 0){
                 /*
                 DECOMPOSES TO:
-                -- la $a0, %label               (label address: 0x12345678)
+                -- la $a0, %label              (label address: 0x12345678)
                     | lui $at,0x00001234       (001111 00000 00001 XXXXXXXXXXXXXXXX)
                     | ori $a0,$at,0x00005678   (001101 00001 00100 XXXXXXXXXXXXXXXX)
                 -- li $v0, 1
@@ -1184,12 +1190,48 @@ void GENERATE_MACHINE_CODE(FILE *machinecode, Instruction *InstructionList[], in
                 machine_code = 0;
             }
             else if(strcmp(InstructionList[line]->mnemonic, "read_integer") == 0){
-                /* NOT DONE
+                /* 
                 DECOMPOSES TO:
-
+                -- la $a0, %label              (label address: 0x12345678)
+                    | lui $at,0x00001234       (001111 00000 00001 XXXXXXXXXXXXXXXX)
+                    | ori $a0,$at,0x00005678   (001101 00001 00100 XXXXXXXXXXXXXXXX)
+                -- li $v0, 5
+                    | lui $at,0x00000000       (001111 00000 00001 0000000000000000)
+                    | ori $v0,$at,0x00000005   (001101 00001 00010 0000000000000005)
+                -- syscall
                 */
                 int address = SYMBOL_EXISTS(InstructionList[line]->target, head);
+                int upper = address; int lower = address;
                 InstructionList[line]->immediate = address;
+
+                // -- LOAD UPPER IMMEDIATE
+                machine_code = (15361 << 16) + upper;
+                machine_code_string = GET_BINARY(machine_code);
+                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+                fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+
+                // -- OR IMMEDIATE
+                machine_code = (13348 << 16) + lower;
+                machine_code_string = GET_BINARY(machine_code);
+                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+                fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+                
+                // LOAD IMMEDIATE
+
+                // -- LOAD UPPER IMMEDIATE
+                machine_code = 0b00111100000000010000000000000000;
+                machine_code_string = GET_BINARY(machine_code);
+                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+                fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+
+                // -- OR IMMEDIATE
+                machine_code = 0b00110100001000100000000000000101;
+                machine_code_string = GET_BINARY(machine_code);
+                fprintf(machinecode, "%s: ", InstructionList[line]->mnemonic);
+                fprintf(machinecode, "%0*s\n", 32, machine_code_string);
+
+                // SYSCALL
+                machine_code = 0;
 
             }
             else if(strcmp(InstructionList[line]->mnemonic, "exit") == 0){
@@ -1242,16 +1284,18 @@ int HEX_TO_DECIMAL(char *str){
 
 void ADD_TO_MEMORY(char MemoryFile[], Symbol *SymbolTable, char *symbol_name){
     // STORES information to the MEMORY
-    Symbol *data_label = GET_LABEL(SymbolTable, symbol_name);
-    printf("%s", data_label->name);
+    Symbol *data_label = GET_LABEL(SymbolTable,symbol_name); // obtain data_label from SymbolTable
+    if(strcmp(symbol_name, "\0")==0)
+      data_label = SymbolTable;  // dummy symbol
     if(strcmp(data_label->str_value,"\0")!=0) 
         // STORE STRING
         strcpy(MemoryFile + (data_label->address - BASE_DATA), data_label->str_value);
     else{ 
         // STORE INTEGER
-        for(int i=0; i<4; i++)
+        for(int i=0; i<4; i++){
             MemoryFile[data_label->address - BASE_DATA + i] = 
             data_label->int_value >> (32-(((i+1))*8));
+        }
     }
 }
 

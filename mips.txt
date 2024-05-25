@@ -1,13 +1,8 @@
  12
 .include "macros.asm"
 .text
-main: print_str(msg1)
-read_str(name,10)
-la $t1,msg1
-print_str(msg2)
-print_str(name)
-exit()
+addi $t0,$t0,100500
+sw $t0,dummy
+print_int(dummy)
 .data
-allocate_str(msg1,"Enter a string: ")
-allocate_str(msg2,"You entered: ")
-allocate_bytes(name,10)
+allocate_bytes(dummy,1)
