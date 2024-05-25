@@ -799,7 +799,6 @@ int main()
                     Symbol* temp = (Symbol*)malloc(sizeof(Symbol));
                     temp->address = RegisterFile[REG_NUMBER("$a0")];
                     temp->next = NULL;
-                    printf("test: %d %d\n", strlen(string), RegisterFile[REG_NUMBER("$a1")] - 1);
                     if (strlen(string) < RegisterFile[REG_NUMBER("$a1")] - 1) strcat(string, "\n");
                     strcpy(temp->str_value,string);
                     ADD_TO_MEMORY(MemoryFile, temp, "\0");

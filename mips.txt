@@ -1,4 +1,4 @@
-23
+29
 .text
 print_str(one)
 read_integer(a)
@@ -9,9 +9,15 @@ lw $a1,b
 print_str(output)
 GCD()
 beq $a0,$a1,equal
+li $a0,10
+li $v0,11
+syscall
 print_str(neq)
 j end
-equal: print_str(eq)
+equal: li $a0,10
+li $v0,11
+syscall
+print_str(eq)
 end: li $v0,10
 syscall
 .data
