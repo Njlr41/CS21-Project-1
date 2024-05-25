@@ -10,23 +10,6 @@ int GCD(int x, int y){
     return x;
 }
 
-void print_str(char* string){
-    printf("%s", string);
-}
-
-void read_str(char* string, int length){
-    fgets(string, length, stdin);
-}
-
-void print_integer(int number){
-    printf("%d", number);
-}
-void read_integer(int number){
-    scanf("%d", &number);
-}
-
-void exit();
-
 
 
 
